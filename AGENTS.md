@@ -7,7 +7,7 @@ AI coding agent. Follow SDD: **SPEC → PLAN → CODE → TEST → SECURITY → 
 
 ## Project Layout
 ```
-banking-agent-prototype/
+nexus-ecosystem/
 ├── nexus-mnemo/       # Go — Vector memory (MCP server, 14 tools planned)
 │   ├── vec/           # Vector store + embeddings (bge-m3, 1024-dim)
 │   ├── mcp/           # MCP server (JSON-RPC 2.0 over stdio)

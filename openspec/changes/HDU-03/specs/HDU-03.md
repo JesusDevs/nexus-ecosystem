@@ -22,9 +22,9 @@ And memory is saved with outcome="partial"
 
 ### Scenario 3: Release wrapper
 ```gherkin
-Given the "banking-agent-prototype" project has saved memories
+Given the "nexus-ecosystem" project has saved memories
 When nexus-sdd release v0.3.0 is run
-Then mnemo release banking-agent-prototype v0.3.0 is called
+Then mnemo release nexus-ecosystem v0.3.0 is called
 And a snapshot is created in vec_releases
 ```
 
