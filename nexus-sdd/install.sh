@@ -288,108 +288,72 @@ create_nexus_dir() {
     mkdir -p .nexus/{profiles,skills,alerts,openspec}
     mkdir -p openspec/changes
 
-    # Default developer profile
-    cat > .nexus/profiles/developer.profile.yaml << 'PROFILE'
-name: developer
-role: fullstack
-strengths: []
-weaknesses: []
-preferred_patterns:
-  - repository-pattern
-  - dependency-injection
-  - single-responsibility
-avoided_patterns:
-  - god-objects
-  - premature-optimization
-testing_level: unit+integration
-stack: []
-languages: []
-PROFILE
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    # Default team profile
-    cat > .nexus/profiles/team.profile.yaml << 'TEAM'
-name: team
-conventions:
-  naming: snake_case
-  formatting: ruff
-  imports: isort
-review_checklist:
-  - tests_present
-  - no_hardcoded_secrets
-  - no_dead_code
-branch_strategy: trunk-based
-ci_cd:
-  provider: github-actions
-  auto_deploy: false
-TEAM
+    # Copy full profiles from templates (includes harness + SDD + team skills)
+    if [[ -d "$SCRIPT_DIR/templates/.nexus/profiles" ]]; then
+        cp "$SCRIPT_DIR/templates/.nexus/profiles/"*.yaml .nexus/profiles/ 2>/dev/null || true
+    fi
 
-    # Config
-    cat > .nexus/config.yaml << 'CONFIG'
-nexus_version: "0.2.0"
-openspec_enabled: true
-mnemo_enabled: true
-langfuse_enabled: false
-security_scan_on_commit: true
-ralph_loop_max_retries: 3
-token_report_frequency: 3
-CONFIG
+    # Copy 30-harness config from template
+    if [[ -f "$SCRIPT_DIR/templates/.nexus/config.yaml" ]]; then
+        cp "$SCRIPT_DIR/templates/.nexus/config.yaml" .nexus/config.yaml
+    fi
 
-    ok "Estructura .nexus/ creada"
+    # SDD tracking file (which HDU is active)
+    cat > .nexus/current_task.yaml << 'TASK'
+# Nexus SDD — Active Task Tracking
+# This file is managed by nexus-sdd orchestrate and the PreToolUse hook.
+# When empty, code writes are blocked. Create a spec to unblock:
+#   nexus-sdd spec "Feature title"
+hdu_id: none
+phase: none
+agent: none
+TASK
+
+    ok "Estructura .nexus/ creada (config + profiles + tracking)"
 }
 
 # ── Configure AI Agents ───────────────────────────────────────────────
 configure_agents() {
     header "Configurando Agentes de IA"
 
-    # Claude Code
-    if [[ -d ".claude" ]] || command -v claude &>/dev/null; then
-        mkdir -p .claude
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-        # Registrar mnemo como MCP server
-        if command -v mnemo &>/dev/null; then
-            claude mcp add mnemo -- mnemo mcp 2>/dev/null || warn "No se pudo agregar mnemo a Claude Code (MCP)"
+    # Claude Code
+    if command -v claude &>/dev/null; then
+        mkdir -p .claude/hooks
+
+        # ── SDD Enforcement Hooks ──────────────────────────────────
+        if [[ -d "$SCRIPT_DIR/templates/.claude/hooks" ]]; then
+            cp "$SCRIPT_DIR/templates/.claude/hooks/"*.sh .claude/hooks/
+            chmod +x .claude/hooks/*.sh
+            ok "SDD enforcement hooks instalados (PreToolUse gate + Stop auto-save + SessionStart context)"
         fi
 
-        # AGENTS.md for Claude Code
-        cat > AGENTS.md << 'AGENTS'
-# Nexus-SDD Agent Instructions
+        # ── Settings with hook config ───────────────────────────────
+        if [[ -f "$SCRIPT_DIR/templates/.claude/settings.local.json" ]]; then
+            cp "$SCRIPT_DIR/templates/.claude/settings.local.json" .claude/settings.local.json
+            ok "Claude Code settings con hooks configurados"
+        fi
 
-## Your Role
-You are an AI coding agent working within the Nexus-SDD framework.
-Follow Spec-Driven Development (SDD): SPEC → PLAN → CODE → TEST → SECURITY.
+        # ── Register mnemo as MCP server ───────────────────────────
+        if command -v mnemo &>/dev/null; then
+            claude mcp add mnemo -- mnemo mcp 2>/dev/null || warn "No se pudo agregar mnemo MCP a Claude Code"
+        fi
 
-## Core Rules
-1. **NEVER write code before a spec is approved.** Use OpenSpec (`/opsx:propose`).
-2. **Read the plan before coding.** The plan is in `openspec/changes/<HDU>/plan.md`.
-3. **Every file gets its test.** No test = not done.
-4. **Security scan before commit.** Secrets, keys, tokens → BLOCKED.
-5. **Report token usage** every 3 significant actions.
+        # ── Register graphify skill ─────────────────────────────────
+        if command -v graphify &>/dev/null; then
+            graphify claude install 2>/dev/null || true
+            ok "Graphify skill registrado en Claude Code"
+        fi
 
-## Memory (Nexus-Mnemo)
-Before making decisions, search the vector memory:
-```bash
-mnemo search "<your query>" --project $(basename $(pwd))
-```
-
-To transfer knowledge from other projects:
-```bash
-mnemo transfer "<context>" $(basename $(pwd))
-```
-
-## Multi-Agent Team
-Invoke specialized personas: `/supervisor`, `/po-agent`, `/ux-agent`,
-`/architect-agent`, `/dev-agent`, `/qa-agent`, `/devops-agent`
-
-## Profiles
-Read `.nexus/profiles/` for team conventions, preferred patterns, and testing level.
-AGENTS
-
-        ok "Claude Code configurado (AGENTS.md + MCP)"
+        ok "Claude Code configurado (hooks + settings + MCP + graphify)"
     fi
 
     # OpenCode
     if command -v opencode &>/dev/null; then
-        opencode mcp add mnemo -- mnemo mcp 2>/dev/null || warn "mnemo setup para OpenCode falló"
+        opencode mcp add mnemo -- mnemo mcp 2>/dev/null || true
         ok "OpenCode configurado"
     fi
 
@@ -401,15 +365,17 @@ AGENTS
 
     # Cursor / Windsurf
     if [[ -d ".cursor" ]]; then
-        cat > .cursor/rules/nexus-sdd.md << 'CURSOR'
+        cp "$SCRIPT_DIR/templates/.cursor/rules/nexus-sdd.md" .cursor/rules/ 2>/dev/null || {
+            mkdir -p .cursor/rules
+            cat > .cursor/rules/nexus-sdd.md << 'CURSOR'
 # Nexus-SDD Rules
 - Follow SDD: spec → plan → code → test → security
 - Use .nexus/profiles/ for conventions
 - Search mnemo before architectural decisions
 - Security scan before commit
 - BDD scenarios for every feature
-- Team personas: supervisor, PO, UX, Architect, Dev, QA, DevOps
 CURSOR
+        }
         ok "Cursor configurado"
     fi
 }
@@ -485,8 +451,6 @@ main() {
     install_ollama
     install_mnemo
     install_nexus
-    detect_stack
-    install_skills
     create_nexus_dir
     configure_agents
     init_openspec
