@@ -1,37 +1,81 @@
-# Perfil del Desarrollador
-# Define cómo el agente se comporta contigo
+# Nexus Ecosystem — Developer Profile
+# "Un perfil por developer — no mezclar preferencias entre proyectos"
 
 name: developer
 role: fullstack
 
-# Tus fortalezas — el agente confía más en tu código en estas áreas
-strengths:
-  - backend
-  # - frontend
-  # - devops
-  # - testing
+# ── Stack ────────────────────────────────────────────────────
+stack: [go, python, bash, markdown]
+languages: [go, python, bash]
+frameworks: [typer, rich, sqlite]
+tools: [ollama, mnemo, git, claude-code]
 
-# Tus debilidades — el agente explica más en estas áreas
-weaknesses:
-  - CSS
-  - accessibility
+# ── Harness Preferences ──────────────────────────────────────
+harness:
+  swarm_mode: hybrid                    # dag | supervisor | swarm | hybrid
+  delegation: ask_on_risk               # inline | delegate | full_sdd | ask_on_risk
+  token_report_frequency: 3             # cada N acciones significativas
+  max_lines_per_pr: 400
+  chain_strategy: stacked_prs           # stacked | feature_branch | direct_main
 
-# Patrones que prefieres — el agente los aplica por defecto
+# ── SDD Methodology ─────────────────────────────────────────
+sdd:
+  strictness: full                      # full | relaxed | minimal
+  spec_format: openspec                 # proposal + specs + design + tasks
+  bdd_required: true                    # Gherkin scenarios en cada spec
+  tdd_protocol: [red, green, triangulate, refactor]
+  verify_before_archive: true           # QA agent verifica
+
+# ── Patterns ────────────────────────────────────────────────
 preferred_patterns:
   - repository-pattern
   - dependency-injection
-  - single-responsibility-principle
-  - test-driven-development
-
-# Patrones que EVITAS — el agente nunca los sugiere
+  - single-responsibility
+  - interface-segregation
+  - fail-fast
 avoided_patterns:
   - god-objects
   - premature-optimization
-  - magic-numbers
+  - magic-strings
+  - hidden-side-effects
 
-# Nivel de testing que esperas
-testing_level: unit+integration  # unit | unit+integration | bdd+unit+integration | full (bdd+unit+integration+e2e)
+# ── Testing ─────────────────────────────────────────────────
+testing:
+  level: unit+integration               # unit | integration | e2e | unit+integration
+  framework: go test | pytest
+  coverage_target: 80
+  run_before_commit: true
 
-# Tu stack actual
-stack: []
-languages: []
+# ── Team Skills (core personas activas) ─────────────────────
+team_skills:
+  - supervisor                           # orquestador de fases
+  - po-agent                             # specs + BDD + criterios aceptación
+  - ux-agent                             # usabilidad + accesibilidad
+  - architect-agent                      # diseño + trade-offs + dependencias
+  - dev-agent                            # implementación test-first
+  - qa-agent                             # testing adversarial + mutación
+  - devops-agent                         # CI/CD + seguridad + dependencias
+
+# ── Mnemo Memory ────────────────────────────────────────────
+mnemo:
+  auto_save_on:
+    - decision                           # guardar rationale de decisiones
+    - bugfix                             # guardar root cause + fix
+    - pattern                            # guardar patrones aplicados
+    - progress                           # trackear progreso entre sesiones
+  search_before:
+    - architecture_change
+    - new_package
+    - api_design
+    - db_schema_change
+
+# ── Strengths & Weaknesses ──────────────────────────────────
+strengths:
+  - go-backend
+  - sqlite-vector-search
+  - mcp-protocol
+  - markdown-portability
+weaknesses:
+  - frontend-ui
+  - mobile-native
+  - kubernetes-ops

@@ -11,6 +11,34 @@
 
 ---
 
+## Project Structure
+
+```
+monorepo/                          # Nexus Ecosystem
+├── nexus-mnemo/                   # Go — Vector memory + MCP server
+│   ├── vec/                       #   store.go (SQLite), embed.go (bge-m3)
+│   ├── mcp/                       #   server.go (JSON-RPC 2.0 over stdio)
+│   ├── main.go                    #   CLI (search, save, config, setup, mcp)
+│   └── install.sh
+├── nexus-sdd/                     # SDD Harness (markdown + bash + minimal Python)
+│   ├── nexus_sdd/                 #   ← paquete Python (solo typer + rich)
+│   │   ├── cli.py                 #     spec, orchestrate, release, status
+│   │   └── orchestrate.py         #     decompose + delegate + track
+│   ├── skills/team/               #   7 personas markdown (core)
+│   ├── extras/skills/             #   skills opcionales (--full install)
+│   ├── templates/.nexus/          #   configs auto-copiadas al instalar
+│   └── install.sh
+├── openspec/                      # OpenSpec changes (HDUs activos)
+├── .nexus/                        # Config local + profiles
+│   ├── config.yaml                #   30-harness YAML
+│   └── profiles/
+└── AGENTS.md                      # Root-level agent instructions
+```
+
+**`nexus-sdd/` vs `nexus_sdd/`**: El primero es el proyecto (docs, templates, skills, install.sh). El segundo es el paquete Python mínimo (`cli.py` + `orchestrate.py`) que se instala con `pip install -e .`. Sin frameworks pesados — solo typer + rich.
+
+---
+
 ## Layer Architecture
 
 ```
