@@ -1,0 +1,37 @@
+# Perfil del Desarrollador
+# Define cómo el agente se comporta contigo
+
+name: developer
+role: fullstack
+
+# Tus fortalezas — el agente confía más en tu código en estas áreas
+strengths:
+  - backend
+  # - frontend
+  # - devops
+  # - testing
+
+# Tus debilidades — el agente explica más en estas áreas
+weaknesses:
+  - CSS
+  - accessibility
+
+# Patrones que prefieres — el agente los aplica por defecto
+preferred_patterns:
+  - repository-pattern
+  - dependency-injection
+  - single-responsibility-principle
+  - test-driven-development
+
+# Patrones que EVITAS — el agente nunca los sugiere
+avoided_patterns:
+  - god-objects
+  - premature-optimization
+  - magic-numbers
+
+# Nivel de testing que esperas
+testing_level: unit+integration  # unit | unit+integration | bdd+unit+integration | full (bdd+unit+integration+e2e)
+
+# Tu stack actual
+stack: []
+languages: []

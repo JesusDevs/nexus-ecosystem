@@ -1,0 +1,30 @@
+# Perfil del Equipo
+# Convenciones, reglas de revisión, y estrategia de trabajo
+
+name: team-name
+
+conventions:
+  naming: snake_case
+  formatting: ruff
+  imports: isort
+  types: strict
+  comments: minimal
+
+review_checklist:
+  - tests_present
+  - no_hardcoded_secrets
+  - no_dead_code
+  - type_coverage_ok
+  - bdd_scenarios_match_spec
+
+branch_strategy: trunk-based  # trunk-based | gitflow | github-flow
+
+ci_cd:
+  provider: github-actions
+  auto_deploy: false
+  deploy_branches:
+    - main
+  required_checks:
+    - lint
+    - test
+    - security-scan

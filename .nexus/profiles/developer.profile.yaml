@@ -1,0 +1,9 @@
+name: developer
+role: fullstack
+strengths: []
+weaknesses: []
+preferred_patterns: [repository-pattern, dependency-injection, single-responsibility]
+avoided_patterns: [god-objects, premature-optimization]
+testing_level: unit+integration
+stack: []
+languages: []

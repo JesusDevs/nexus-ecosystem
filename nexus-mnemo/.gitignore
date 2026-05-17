@@ -1,0 +1,9 @@
+# Nexus-Mnemo
+mnemo
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+.DS_Store
+vendor/
