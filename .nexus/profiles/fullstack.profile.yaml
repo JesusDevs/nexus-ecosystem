@@ -1,0 +1,41 @@
+name: fullstack
+description: "Balanced full-stack team — Python backend + React frontend"
+type: team
+
+default_model: sonnet
+default_stack: [python, fastapi, react, typescript]
+
+proactive_interrogation: true
+interrogation_depth: deep
+
+agents:
+  supervisor:
+    model: sonnet
+  po-agent:
+    tech_stack: [python, typescript]
+  ux-agent:
+    tech_stack: [react, tailwind]
+  architect-agent:
+    tech_stack: [python, fastapi, react, sql-database]
+    model: sonnet
+    effort: high
+  dev-agent:
+    tech_stack: [python, fastapi, react, typescript, pytest]
+  qa-agent:
+    tech_stack: [python, pytest, playwright]
+  devops-agent:
+    tech_stack: [docker-kubernetes, github-actions]
+
+patterns:
+  preferred:
+    - api-first-design
+    - typed-contracts
+    - server-components
+  avoided:
+    - mixed-responsibilities
+    - n+1-queries
+
+testing:
+  frameworks: [pytest, playwright]
+  coverage_target: 80
+  bdd_required: true

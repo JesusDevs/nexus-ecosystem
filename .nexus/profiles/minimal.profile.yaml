@@ -1,0 +1,26 @@
+name: minimal
+description: "Bare bones — supervisor + dev + qa for quick, focused work"
+type: team
+
+default_model: sonnet
+default_stack: []
+
+proactive_interrogation: true
+interrogation_depth: basic
+
+agents:
+  supervisor:
+    model: sonnet
+  dev-agent:
+    tech_stack: []
+  qa-agent:
+    tech_stack: []
+
+patterns:
+  preferred: []
+  avoided: []
+
+testing:
+  frameworks: []
+  coverage_target: 60
+  bdd_required: false

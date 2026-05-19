@@ -1,0 +1,44 @@
+name: react-nextjs
+description: "Frontend-first team — React, Next.js, Tailwind, shadcn/ui"
+type: team
+
+default_model: sonnet
+default_stack: [react, nextjs, tailwind, typescript]
+
+proactive_interrogation: true
+interrogation_depth: deep
+
+agents:
+  supervisor:
+    model: sonnet
+  po-agent:
+    tech_stack: [react, typescript, playwright]
+  ux-agent:
+    tech_stack: [react, nextjs, tailwind, shadcn]
+    model: sonnet
+    effort: high
+  architect-agent:
+    tech_stack: [react, nextjs, tailwind, typescript]
+    model: sonnet
+  dev-agent:
+    tech_stack: [react, nextjs, tailwind, typescript, playwright]
+  qa-agent:
+    tech_stack: [react, playwright, typescript]
+  devops-agent:
+    tech_stack: [docker-kubernetes, github-actions]
+
+patterns:
+  preferred:
+    - server-components
+    - streaming-ssr
+    - optimistic-updates
+    - island-architecture
+  avoided:
+    - client-side-only
+    - prop-drilling-deep
+    - mega-context
+
+testing:
+  frameworks: [playwright, vitest, testing-library]
+  coverage_target: 80
+  bdd_required: true

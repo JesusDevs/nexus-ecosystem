@@ -232,6 +232,22 @@ var tools = []ToolDef{
 			Required: []string{"project"},
 		},
 	},
+	{
+		Name:        "agent_dispatch",
+		Description: "Dispatches a task to a specialized Nexus agent persona (supervisor, po-agent, ux-agent, architect-agent, dev-agent, qa-agent, devops-agent). Loads the agent's persona definition, relevant tech stack skills from the profile, prior context from mnemo semantic search, and proactive interrogation prompts if the profile enables 'Tony Stark mode'. Returns the assembled agent prompt ready for execution.",
+		InputSchema: JSONSchema{
+			Type: "object",
+			Properties: map[string]PropDef{
+				"agent":      {Type: "string", Description: "Agent to dispatch: supervisor, po-agent, ux-agent, architect-agent, dev-agent, qa-agent, devops-agent"},
+				"task":       {Type: "string", Description: "Task description in natural language"},
+				"profile":    {Type: "string", Description: "Profile name (default: developer). Available: fullstack-python-langgraph, fullstack-go, react-nextjs, fullstack, minimal"},
+				"hdu_id":     {Type: "string", Description: "OpenSpec HDU context (optional)"},
+				"tech_stack": {Type: "string", Description: "Comma-separated tech stack override (optional)"},
+				"mode":       {Type: "string", Description: "'prompt' returns assembled prompt (default: prompt)"},
+			},
+			Required: []string{"agent", "task"},
+		},
+	},
 }
 
 func (s *Server) handleToolsList(req *JSONRPCRequest) {
@@ -274,6 +290,8 @@ func (s *Server) handleToolsCall(req *JSONRPCRequest) {
 		result, err = s.handleListReleases(params.Arguments)
 	case "mem_detect_conflicts_semantic":
 		result, err = s.handleDetectConflicts(params.Arguments)
+		case "agent_dispatch":
+			result, err = s.handleAgentDispatch(params.Arguments)
 	default:
 		s.writeError(req.ID, -32602, "Unknown tool: "+params.Name)
 		return

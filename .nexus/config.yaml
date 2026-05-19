@@ -242,3 +242,42 @@ harness:
     triggers: [stop_hook, compaction, session_end]
     storage: mnemo
     includes: [decisions, patterns, progress, blockers]
+
+  # ── BLOQUE 7: AGENT FACTORY (4) ──────────────────────────────
+
+  agent_registry:
+    enabled: true
+    auto_refresh_on_start: true
+    paths:
+      personas: skills/team/
+      tech_stacks: extras/skills/
+      profiles: .nexus/profiles/
+    output: .nexus/skill-registry.md
+    description: "Escanea, valida, e indexa agentes y tech stacks"
+
+  agent_dispatch:
+    enabled: true
+    default_mode: prompt           # prompt | mcp | hook
+    default_profile: developer
+    proactive_interrogation: true
+    max_context_memories: 5
+    result_contract_enforcement: true
+    dispatch_record: mnemo         # guarda dispatch en mnemo para cross-session tracking
+    description: "Dispara sub-agentes con persona + tech stack + mnemo + interrogacion"
+
+  profile_loader:
+    enabled: true
+    profiles_dir: .nexus/profiles/
+    active_profile: developer
+    rules:
+      - "un perfil por equipo — define tech stack por agente"
+      - "profile overrides defaults, no reemplaza personas"
+      - "interrogation depth seteado por perfil"
+    description: "Carga perfiles YAML de composicion de equipo"
+
+  tech_stack_digestion:
+    enabled: true
+    rule: "tech skills compactados en reglas digeribles (max 10 por stack)"
+    priority: profile_override > agent_metadata > default_stack
+    categories: [web, backend, mobile, ai, testing, infra]
+    description: "Modulos de conocimiento tecnologico cargables por agente"

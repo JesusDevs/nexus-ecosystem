@@ -1,0 +1,45 @@
+name: fullstack-python-langgraph
+description: "Python + LangGraph specialist team for AI agent development"
+type: team
+
+default_model: sonnet
+default_stack: [python, fastapi, langgraph-python]
+
+proactive_interrogation: true
+interrogation_depth: deep
+
+agents:
+  supervisor:
+    model: sonnet
+    effort: high
+  po-agent:
+    tech_stack: [python, bdd-behave]
+  ux-agent:
+    tech_stack: [react, nextjs, tailwind]
+  architect-agent:
+    tech_stack: [python, fastapi, langgraph-python, langgraph-aws]
+    model: sonnet
+    effort: high
+  dev-agent:
+    tech_stack: [python, fastapi, langgraph-python, pytest]
+  qa-agent:
+    tech_stack: [python, pytest, playwright, bdd-behave]
+  devops-agent:
+    tech_stack: [python, docker-kubernetes, github-actions, sql-database]
+
+patterns:
+  preferred:
+    - supervisor-agent-pattern
+    - state-graph
+    - typed-state
+    - streaming-events
+    - human-in-the-loop
+  avoided:
+    - linear-chains
+    - god-agents
+    - untyped-state
+
+testing:
+  frameworks: [pytest, pytest-asyncio, playwright]
+  coverage_target: 85
+  bdd_required: true

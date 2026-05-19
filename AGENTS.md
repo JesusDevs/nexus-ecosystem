@@ -27,16 +27,41 @@ nexus-ecosystem/
 ```
 
 ## Multi-Agent Team
-7 specialized personas available as slash commands:
 
-| Command | Role | Use for |
-|---------|------|---------|
-| `/supervisor` | SDD Orchestrator | Decompose HDUs, delegate phases |
-| `/po-agent` | Product Owner | Specs, acceptance criteria, Gherkin |
-| `/ux-agent` | UX Designer | Usability, accessibility, design |
-| `/architect-agent` | Solution Architect | System design, trade-offs, API/DB |
-| `/dev-agent` | Developer | Implementation, tests, bug fixes |
-| `/qa-agent` | QA Engineer | Adversarial testing, root cause |
+7 specialized personas available as Skills AND as spawnable sub-agents via Agent Factory.
+
+**Via Skills** (shape current agent behavior):
+| Command | Role |
+|---------|------|
+| `/supervisor` | SDD Orchestrator — decompose, delegate, track |
+| `/po-agent` | Product Owner — specs, Gherkin, scope |
+| `/ux-agent` | UX Designer — usability, accessibility, design memory |
+| `/architect-agent` | Solution Architect — design, trade-offs |
+| `/dev-agent` | Developer — test-first implementation |
+| `/qa-agent` | QA Engineer — adversarial testing, root cause |
+| `/devops-agent` | DevOps — CI/CD, security, git push harness |
+
+**Via Agent Factory** (spawn as parallel sub-agents):
+```bash
+nexus-sdd team spawn dev-agent -t "Implement auth" --profile fullstack-python-langgraph
+nexus-sdd team spawn ux-agent -t "Review onboarding flow" --profile react-nextjs
+nexus-sdd team list                    # List agents, tech stacks, profiles
+nexus-sdd team profile set minimal     # Switch team profile
+```
+
+**Agent Dispatch via MCP:**
+```json
+{"tool": "agent_dispatch", "args": {"agent": "architect-agent", "task": "Design API", "profile": "fullstack-go"}}
+```
+
+**Profiles** (`.nexus/profiles/`):
+| Profile | Stack | For |
+|---------|-------|-----|
+| `fullstack-python-langgraph` | Python, FastAPI, LangGraph | AI agent development |
+| `fullstack-go` | Go, go-fiber, SQLite | High-perf backend + MCP |
+| `react-nextjs` | React, Next.js, Tailwind | Frontend dashboards |
+| `fullstack` | Python + React | Balanced web apps |
+| `minimal` | Minimal | Quick fixes |
 | `/devops-agent` | DevOps | CI/CD, security scans, deps |
 
 ## Before Any Decision

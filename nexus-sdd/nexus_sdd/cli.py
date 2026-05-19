@@ -600,6 +600,178 @@ def release(
         typer.echo(f"\nRelease {version} complete.")
 
 
+# ── Team Command Group ────────────────────────────────────────────────
+
+team_app = typer.Typer(
+    help="Agent Factory — spawn, list, and manage sub-agents",
+    no_args_is_help=True,
+)
+app.add_typer(team_app, name="team")
+
+
+@team_app.command("spawn")
+def team_spawn(
+    agent: str = typer.Argument(..., help="Agent: supervisor, po-agent, ux-agent, architect-agent, dev-agent, qa-agent, devops-agent"),
+    task: str = typer.Option(..., "--task", "-t", help="Task description"),
+    profile_name: str = typer.Option("developer", "--profile", "-p", help="Profile name"),
+    hdu_id: Optional[str] = typer.Option(None, "--hdu-id", help="HDU context"),
+    mode: str = typer.Option("prompt", "--mode", "-m", help="prompt | mcp"),
+    tech_stack_str: Optional[str] = typer.Option(None, "--stack", "-s", help="Comma-separated tech stack override"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show loaded skills and context"),
+):
+    """
+    Spawn a sub-agent with persona + tech skills + mnemo context + interrogation.
+
+    Generates the complete prompt for Claude Code's Agent tool.
+    """
+    from .skills.registry import SkillRegistry
+    from .profile import load_profile, list_profiles
+    from .prompt_builder import assemble_agent_prompt
+
+    project_root = _find_project_root()
+    profiles_dir = project_root / ".nexus" / "profiles"
+    personas_dir = project_root / "nexus-sdd" / "skills" / "team"
+    extras_dir = project_root / "nexus-sdd" / "extras" / "skills"
+
+    # Load registry
+    registry = SkillRegistry()
+    registry.scan_personas(personas_dir)
+    registry.scan_tech_stacks(extras_dir)
+
+    # Load profile
+    profile = load_profile(profile_name, profiles_dir)
+    if not profile:
+        available = ", ".join(list_profiles(profiles_dir))
+        typer.echo(f"Profile '{profile_name}' not found. Available: {available}", err=True)
+        raise typer.Exit(1)
+
+    # Resolve tech stack override
+    tech_override = None
+    if tech_stack_str:
+        tech_override = [s.strip() for s in tech_stack_str.split(",") if s.strip()]
+
+    # Assemble prompt
+    result = assemble_agent_prompt(
+        agent_name=agent,
+        task=task,
+        profile=profile,
+        registry=registry,
+        hdu_id=hdu_id,
+        tech_stack_override=tech_override,
+        project=str(project_root.name),
+        personas_dir=personas_dir,
+    )
+
+    typer.echo(result.system_prompt)
+
+    if verbose:
+        typer.echo("\n" + "=" * 60, err=True)
+        typer.echo(f"Agent: {result.agent_name}", err=True)
+        typer.echo(f"Profile: {result.profile_name}", err=True)
+        typer.echo(f"Tech stacks: {result.tech_stacks_loaded}", err=True)
+        typer.echo(f"Interrogation: {result.interrogation_mode}", err=True)
+        typer.echo(f"Mnemo context: {'yes' if result.mnemo_context else 'no'}", err=True)
+
+
+@team_app.command("list")
+def team_list(
+    profile_name: Optional[str] = typer.Option(None, "--profile", "-p", help="Show agents for specific profile"),
+):
+    """List all registered agents and their tech stacks."""
+    from .skills.registry import SkillRegistry
+    from .profile import load_profile, list_profiles
+
+    project_root = _find_project_root()
+    personas_dir = project_root / "nexus-sdd" / "skills" / "team"
+    extras_dir = project_root / "nexus-sdd" / "extras" / "skills"
+
+    registry = SkillRegistry()
+    registry.scan_personas(personas_dir)
+    registry.scan_tech_stacks(extras_dir)
+
+    if profile_name:
+        profiles_dir = project_root / ".nexus" / "profiles"
+        profile = load_profile(profile_name, profiles_dir)
+        if not profile:
+            typer.echo(f"Profile '{profile_name}' not found.", err=True)
+            raise typer.Exit(1)
+
+        typer.echo(f"\nProfile: {profile.name} — {profile.description}")
+        typer.echo(f"Default model: {profile.default_model}")
+        typer.echo(f"Default stack: {profile.default_stack}")
+        typer.echo(f"Interrogation: {profile.interrogation_depth}\n")
+        for ag_name, ag_cfg in sorted(profile.agents.items()):
+            agent_def = registry.get_agent(ag_name)
+            desc = agent_def.description[:80] if agent_def else "(unknown)"
+            stack = ag_cfg.tech_stack or profile.default_stack
+            typer.echo(f"  {ag_name}: {ag_cfg.model}, {stack}")
+            typer.echo(f"    {desc}")
+    else:
+        typer.echo(f"\n{len(registry.agents)} agents registered:\n")
+        for name, agent_def in sorted(registry.agents.items()):
+            typer.echo(f"  {name} ({agent_def.model}, {agent_def.effort})")
+            typer.echo(f"    {agent_def.description[:100]}")
+
+        typer.echo(f"\n{len(registry.tech_stacks)} tech stacks by category:")
+        by_cat = registry.list_by_category()
+        for cat in sorted(by_cat):
+            typer.echo(f"  {cat}: {', '.join(sorted(by_cat[cat]))}")
+
+        profiles_dir = project_root / ".nexus" / "profiles"
+        profiles = list_profiles(profiles_dir)
+        typer.echo(f"\n{len(profiles)} profiles: {', '.join(profiles)}")
+
+
+@team_app.command("profile")
+def team_profile(
+    action: str = typer.Argument("show", help="show | set <name> | list"),
+    name: Optional[str] = typer.Argument(None, help="Profile name for 'set' action"),
+):
+    """Show, set, or list active team profiles."""
+    from .profile import load_profile, list_profiles, set_active_profile, get_active_profile
+
+    project_root = _find_project_root()
+    profiles_dir = project_root / ".nexus" / "profiles"
+
+    if action == "list":
+        profiles = list_profiles(profiles_dir)
+        active = get_active_profile(project_root / ".nexus")
+        typer.echo(f"Active: {active}")
+        typer.echo(f"Available: {', '.join(profiles)}")
+
+    elif action == "set":
+        if not name:
+            typer.echo("Usage: nexus-sdd team profile set <name>", err=True)
+            raise typer.Exit(1)
+        set_active_profile(name, project_root / ".nexus")
+        typer.echo(f"Active profile set to: {name}")
+
+    elif action == "show":
+        active = get_active_profile(project_root / ".nexus")
+        profile = load_profile(active, profiles_dir)
+        if profile:
+            typer.echo(f"Active profile: {active}")
+            typer.echo(f"Description: {profile.description}")
+            typer.echo(f"Model: {profile.default_model}")
+            typer.echo(f"Stack: {profile.default_stack}")
+            typer.echo(f"Interrogation: {profile.proactive_interrogation} ({profile.interrogation_depth})")
+            typer.echo(f"\nAgents:")
+            for ag_name, ag_cfg in sorted(profile.agents.items()):
+                tech = ag_cfg.tech_stack or profile.default_stack
+                typer.echo(f"  {ag_name}: {ag_cfg.model}, stack={tech}")
+        else:
+            typer.echo(f"Profile '{active}' not loaded.", err=True)
+
+
+def _find_project_root() -> Path:
+    """Find the project root by looking for .nexus/ directory."""
+    current = Path.cwd()
+    for parent in [current] + list(current.parents):
+        if (parent / ".nexus").exists():
+            return parent
+    return current
+
+
 # ── Entry Point ──────────────────────────────────────────────────────
 
 def main():

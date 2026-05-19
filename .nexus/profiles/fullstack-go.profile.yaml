@@ -1,0 +1,43 @@
+name: fullstack-go
+description: "Go backend team — SQLite, MCP server, high-performance APIs"
+type: team
+
+default_model: sonnet
+default_stack: [go, go-fiber, sql-database]
+
+proactive_interrogation: true
+interrogation_depth: deep
+
+agents:
+  supervisor:
+    model: sonnet
+  po-agent:
+    tech_stack: [go, bdd-behave]
+  ux-agent:
+    tech_stack: [react, tailwind]
+  architect-agent:
+    tech_stack: [go, go-fiber, sql-database]
+    model: sonnet
+    effort: high
+  dev-agent:
+    tech_stack: [go, go-fiber, sql-database, go-test]
+  qa-agent:
+    tech_stack: [go, go-test, playwright]
+  devops-agent:
+    tech_stack: [go, docker-kubernetes, github-actions]
+
+patterns:
+  preferred:
+    - interface-driven
+    - context-propagation
+    - error-wrapping
+    - table-driven-tests
+  avoided:
+    - global-state
+    - panic-in-libraries
+    - reflection-abuse
+
+testing:
+  frameworks: [go-test, testify, playwright]
+  coverage_target: 80
+  bdd_required: true
