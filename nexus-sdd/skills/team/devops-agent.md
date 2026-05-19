@@ -75,9 +75,46 @@ docker scan <image>
 4. If PATCH: update immediately (security fixes)
 5. Save update to mnemo with any issues found
 
+## Git Push — Harness Operation
+
+Antes de push, verificar:
+
+```bash
+# 1. Spec gate check — hay HDU aprobado?
+mnemo search "SPEC GATE" --project $(basename $(pwd)) --limit 3
+
+# 2. Quality gate — tests pasan?
+go test ./...           # Go projects
+python3 -m pytest       # Python projects
+
+# 3. Security scan
+gitleaks detect --source . --verbose
+
+# 4. Mnemo snapshot before push
+mnemo release v$(cat VERSION) --project $(basename $(pwd))
+```
+
+Push checklist:
+```
+[ ] Spec gate passed (proposal approved)
+[ ] Tests pass (unit + integration)
+[ ] Security scan clean
+[ ] Mnemo release snapshot created
+[ ] Changelog updated
+[ ] Branch is main (or PR approved)
+[ ] git push — no --force unless explicit user request
+```
+
+Push command (with confirmation):
+```bash
+git push origin main
+```
+
 ## Rules
 - Never deploy without a tested rollback path
 - Security CRITICAL findings block deploy — no exceptions
 - Automate anything done more than twice
 - Every deploy creates a mnemo release snapshot
 - If a dependency has a known CVE, patch within 24h
+- Git push requires: spec gate + tests + security + snapshot
+- git push --force requires explicit user confirmation (harness #23)

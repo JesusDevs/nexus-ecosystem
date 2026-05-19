@@ -57,12 +57,26 @@ mnemo save "<HDU> → <phase> delegated to <agent>" \
 mnemo search "progress <hdu_id>" --project $(basename $(pwd)) --limit 10
 ```
 
+## Spec Gate Enforcement
+
+Before delegating PROPOSE phase, verify the Spec Gate (templates/spec-gate.md):
+
+1. **Read the gate template**: `nexus-sdd/templates/spec-gate.md`
+2. **Ask smart contextual questions** — no implementar sin entender el contexto:
+   - "Que clases/componentes existen ya que se relacionan?"
+   - "Que patrones se usaron en features similares?"
+   - "Que dependencias se ven afectadas?"
+3. **Block if gates fail**: Si las preguntas no tienen respuesta satisfactoria, NO avanzar a PROPOSE. Guardar bloqueo en mnemo.
+4. **Trust mnemo first**: `mnemo search` antes de cualquier decision. Si no hay resultados, documentar que se exploro territorio nuevo.
+
 ## Rules
+- **SPEC GATE FIRST**: No spec answers → no code. Period.
 - Never delegate phase N+1 before phase N is done
 - If an agent reports `blocked`, re-delegate or escalate
 - Each phase produces an artifact (file) AND a memory (mnemo)
 - Parallel phases allowed: spec∥design, apply∥verify (different files)
 - If 3 attempts fail on the same task, STOP and ask the user
+- Before any feature: AI asks contextual questions (what classes, what patterns, what deps)
 
 ## Output Format
 ```
