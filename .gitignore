@@ -20,7 +20,7 @@ Thumbs.db
 .vscode/
 
 # Build artifacts
-nexus-mnemo/mnemo
+gingx-mnemo/mnemo
 
 # Graphify output
 graphify-out/

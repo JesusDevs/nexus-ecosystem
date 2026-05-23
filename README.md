@@ -1,22 +1,22 @@
-# Nexus Ecosystem
+# Gingx Ecosystem
 
 **Harness-driven AI development.** Spec → Plan → Code → Test → Security → Memory. Every process is a harness contract. No code without an approved spec.
 
 ## Architecture
 
 ```
-nexus-ecosystem/
-├── nexus-mnemo/       # Go — Vector memory (MCP server, JSON-RPC 2.0)
-├── nexus-sdd/         # Python — SDD harness (spec → archive)
+gingx-ecosystem/
+├── gingx-mnemo/       # Go — Vector memory (MCP server, JSON-RPC 2.0)
+├── gingx-sdd/         # Python — SDD harness (spec → archive)
 ├── agent/             # (future) Banking agent runtime
 ├── frontend/          # (future) Banking UI
 ├── openspec/          # Active HDUs (specs, designs, tasks)
-└── .nexus/            # Local config, profiles, skill registry
+└── .gingx/            # Local config, profiles, skill registry
 ```
 
 ## Components
 
-### nexus-mnemo — Vector Memory System
+### gingx-mnemo — Vector Memory System
 
 SQLite + Ollama embeddings + cosine similarity. 8 MCP tools over stdio for universal agent compatibility (Claude Code, Codex, Cursor, Antigravity).
 
@@ -30,7 +30,7 @@ mnemo save "Decision" "What and why." --type decision --outcome resolved
 mnemo release v0.3.0              # Snapshot with release notes
 ```
 
-### nexus-sdd — Spec-Driven Development Harness
+### gingx-sdd — Spec-Driven Development Harness
 
 7 agent personas orchestrated through 8 phases. Each phase produces an artifact AND a memory.
 
@@ -62,7 +62,7 @@ mnemo release v0.3.0              # Snapshot with release notes
 Versionado mediante **mnemo releases**. Cada release es un snapshot de memoria vectorial + diff desde la release anterior.
 
 ```bash
-nexus-sdd release v0.3.0          # Crea snapshot, genera changelog, guarda en mnemo
+gingx-sdd release v0.3.0          # Crea snapshot, genera changelog, guarda en mnemo
 mnemo release v0.3.0              # Release manual con diff y changelog
 mnemo releases                     # Historial de releases
 ```
@@ -106,31 +106,31 @@ Si la IA no puede responder estas preguntas con contexto, **no se escribe codigo
 
 ```bash
 # 1. Instalar mnemo
-curl -fsSL https://raw.githubusercontent.com/JesusDevs/nexus-ecosystem/main/nexus-mnemo/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JesusDevs/gingx-ecosystem/main/gingx-mnemo/install.sh | bash
 
-# 2. Instalar nexus-sdd
-curl -fsSL https://raw.githubusercontent.com/JesusDevs/nexus-ecosystem/main/nexus-sdd/install.sh | bash
+# 2. Instalar gingx-sdd
+curl -fsSL https://raw.githubusercontent.com/JesusDevs/gingx-ecosystem/main/gingx-sdd/install.sh | bash
 
 # 3. Inicializar un proyecto
-nexus-sdd spec "Mi feature" --project mi-proyecto
+gingx-sdd spec "Mi feature" --project mi-proyecto
 
 # 4. Orquestar
-nexus-sdd orchestrate <HDU-ID>
+gingx-sdd orchestrate <HDU-ID>
 
 # 5. Buscar en memoria antes de decidir
 mnemo search "decision similar" --project mi-proyecto --limit 5
 
 # 6. Guardar despues de cada avance significativo
-nexus-sdd save --hdu-id <HDU-ID>
+gingx-sdd save --hdu-id <HDU-ID>
 ```
 
 ## Philosophy
 
 > "Un harness transforma autonomia cruda en trabajo de ingenieria controlado." — Alan Buscaglia, Gentle AI
 
-30 harnesses configurados en `.nexus/config.yaml`. Cada uno es un **contrato operacional**, no una sugerencia. Cubren orquestacion, fases, calidad, skills, entrega, y extensiones.
+30 harnesses configurados en `.gingx/config.yaml`. Cada uno es un **contrato operacional**, no una sugerencia. Cubren orquestacion, fases, calidad, skills, entrega, y extensiones.
 
-El proyecto se gestiona a si mismo — dogfooding nexus-sdd + mnemo + OpenSpec.
+El proyecto se gestiona a si mismo — dogfooding gingx-sdd + mnemo + OpenSpec.
 
 ## Git Reminders
 - `git add -A` is blocked by harness (#23: Permission Security)

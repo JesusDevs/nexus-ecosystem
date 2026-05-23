@@ -1,0 +1,17 @@
+# Gingx-SDD
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+.env
+.env.local
+.gingx/alerts/

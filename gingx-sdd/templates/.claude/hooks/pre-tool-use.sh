@@ -56,7 +56,7 @@ if [[ "$FILE_PATH" =~ _test\.|test_|/tests/|/test/|\.test\.|_spec\.|spec_ ]]; th
     exit 0
 fi
 
-if [[ "$FILE_PATH" =~ ^\\.(gingx|claude)/ ]]; then
+if [[ "$FILE_PATH" =~ ^\.(nexus|claude)/ ]]; then
     exit 0
 fi
 

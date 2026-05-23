@@ -62,17 +62,6 @@ if command -v codegraph &>/dev/null && [[ -d ".codegraph" ]]; then
     fi
 fi
 
-# ── Mnemo sync pull ──────────────────────────────────────────────────
-MNEMO_SYNC_MSG=""
-if command -v mnemo &>/dev/null; then
-    SYNC_OUTPUT=$(mnemo sync pull 2>/dev/null || echo "")
-    if [[ -n "$SYNC_OUTPUT" && "$SYNC_OUTPUT" != *"no sync.remote"* ]]; then
-        MNEMO_SYNC_MSG=" Mnemo synced from remote."
-    fi
-    # Count HDUs in mnemo
-    MNEMO_HDU_COUNT=$(mnemo hdu list --project "$PROJECT" --limit 100 2>/dev/null | grep -c "^  HDU:" || echo "0")
-fi
-
-echo "{\"systemMessage\": \"Gingx Ecosystem ready. HDUs: $HDU_LIST_COUNT (mnemo: $MNEMO_HDU_COUNT), Active: $ACTIVE_HDU.$BLOCKER_MSG$MNEMO_SYNC_MSG$CG_MSG$AUTO_DELEGATION_MSG\n  Mnemo: mnemo search '<query>' --project $PROJECT --limit 5\n  Create HDU: gingx-sdd hdu create '<title>' --question '<blocking question>'\n  Auto: gingx-sdd auto '<task>'\n  Mode: gingx-sdd mode status\"}"
+echo "{\"systemMessage\": \"Gingx Ecosystem ready. HDUs: $HDU_LIST_COUNT, Active: $ACTIVE_HDU.$BLOCKER_MSG$CG_MSG$AUTO_DELEGATION_MSG\n  Mnemo: mnemo search '<query>' --project $PROJECT --limit 5\n  Create HDU: gingx-sdd hdu create '<title>' --question '<blocking question>'\n  Auto: gingx-sdd auto '<task>'\n  Mode: gingx-sdd mode status\"}"
 
 exit 0

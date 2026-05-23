@@ -1,0 +1,26 @@
+[project]
+name = "gingx-sdd"
+version = "0.2.0"
+description = "SDD Framework — Spec-Driven Development with Gingx-Mnemo vector memory + multi-agent team personas"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.12.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5.0",
+]
+
+[project.scripts]
+gingx-sdd = "gingx_sdd.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gingx_sdd*"]
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"

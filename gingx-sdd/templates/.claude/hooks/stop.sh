@@ -46,31 +46,6 @@ except Exception:
                 "Progress saved by Nexus Stop hook. HDU: $HDU" \
                 --type progress --outcome in_progress --project "$PROJECT" \
                 2>/dev/null || true
-
-            # Sync HDU to mnemo (dual-write)
-            if [[ -f "$HDU_DIR/$HDU.yaml" ]]; then
-                python3 -c "
-import yaml, subprocess, sys
-try:
-    with open('$HDU_DIR/$HDU.yaml') as f:
-        data = yaml.safe_load(f) or {}
-    hdu_id = data.get('id', '$HDU')
-    title = data.get('title', hdu_id)
-    phase = data.get('phase', 'init')
-    status = data.get('status', 'active')
-    summary = data.get('executive_summary', '')
-    subprocess.run([
-        'mnemo', 'hdu', 'save', hdu_id,
-        '--title', title,
-        '--phase', phase,
-        '--status', status,
-        '--project', '$PROJECT',
-        '--content', summary or title,
-    ], capture_output=True, timeout=5)
-except Exception:
-    pass
-" 2>/dev/null || true
-            fi
         fi
     fi
 fi
@@ -83,14 +58,6 @@ fi
 # ── Update graphify graph if installed ──────────────────────────────
 if command -v graphify &>/dev/null && [[ -d "graphify-out" ]]; then
     graphify update . --no-cluster 2>/dev/null || true
-fi
-
-# ── Mnemo sync push ──────────────────────────────────────────────────
-if command -v mnemo &>/dev/null; then
-    PUSH_OUTPUT=$(mnemo sync push 2>/dev/null || echo "")
-    if [[ -n "$PUSH_OUTPUT" && "$PUSH_OUTPUT" != *"no sync.remote"* ]]; then
-        echo "[mnemo] pushed to remote" >&2
-    fi
 fi
 
 echo "{\"systemMessage\": \"Session ended. HDU progress saved. Run gingx-sdd hdu summary to see all.\"}"
