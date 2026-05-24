@@ -1,5 +1,20 @@
 # Changelog — Gingx-Mnemo
 
+## v0.2.1 — Portable Memory (2026-05-23)
+
+### New Features
+
+- **Portable memory via `.gingx/memory/`**: `entries.jsonl` (JSONL, git-diffable) + `embeddings.json` (gitignored, regenerable)
+- **Dual-write on save**: every `mnemo save` writes to both `~/.mnemo/mnemo.db` AND `.gingx/memory/entries.jsonl`
+- **`mnemo import` command**: reads `.gingx/memory/entries.jsonl`, checks for duplicates, inserts into local DB
+- **Auto-import on session start**: `SessionStart` hook calls `mnemo import` automatically
+- **`FindGingxDir()`** in vec/store.go: walks up from cwd max 5 levels looking for `.gingx/`
+- **`MemoryJSONEntry` struct** for portable serialization
+- **`AppendToMemoryFiles()`** for atomic dual-write
+- **Deprecation hints** on `mnemo sync push/pull`
+
+---
+
 ## v0.2.0 — Memoria Versionable (2026-05-13)
 
 ### Nuevas Features
