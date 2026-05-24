@@ -32,7 +32,7 @@ harness:
     rule: "coordina, no ejecuta"
     phases: [explore, propose, spec, design, tasks, apply, verify, archive]
     phase_agent_map:
-      explore:  architect-agent
+      explore:  explorer-agent
       propose:  po-agent
       spec:     po-agent
       design:   architect-agent

@@ -86,7 +86,7 @@ def _matches(text: str, keywords: list[str]) -> bool:
 # ── Agent Suggestion ──────────────────────────────────────────────
 
 DEFAULT_PHASE_MAP = {
-    "explore": "architect-agent",
+    "explore": "explorer-agent",
     "propose": "po-agent",
     "spec": "po-agent",
     "design": "architect-agent",
@@ -99,12 +99,14 @@ DEFAULT_PHASE_MAP = {
 
 DEFAULT_AGENT_ROLES = {
     "supervisor": "SDD Orchestrator — coordina fases, asigna agentes",
+    "explorer-agent": "Knowledge Explorer — mapea codebases, descubre patrones, construye grafo de conocimiento portable",
     "po-agent": "Product Owner — define alcance, prioridades, criterios de aceptacion",
     "ux-agent": "UX Designer — diseno de interaccion, accesibilidad, consistencia visual",
     "architect-agent": "Solution Architect — estructura de componentes, trade-offs, patterns",
     "dev-agent": "Developer — implementa siguiendo spec + design + TDD",
     "qa-agent": "QA Engineer — verifica BDD scenarios, coverage, regresiones",
     "devops-agent": "DevOps — CI/CD, secrets, infra, dependencias",
+    "goal-agent": "Autonomous Goal Executor — persigue objetivos sin supervision humana, plan-act-observe-reflect",
 }
 
 

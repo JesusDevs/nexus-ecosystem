@@ -1,0 +1,128 @@
+domains:
+- name: sdd-core
+  path: gingx-sdd/gingx_sdd/
+  description: SDD harness core — CLI, goal tracker, auto delegation, init, modes,
+    prompts
+  key_symbols:
+  - cli.py (typer app)
+  - goal_tracker.py (GoalState, GoalStore)
+  - auto_delegate.py (classify_task, dispatch)
+  - init_project.py
+  - modes.py (GingxMode)
+  - prompt_builder.py
+  dependencies:
+  - mnemo
+  - codegraph
+  patterns:
+  - harness
+  - state-machine
+  - delegation
+  last_indexed: 2026-05-24 12:35
+- name: mnemo
+  path: gingx-mnemo/
+  description: Vector memory engine in Go — semantic search, save, MCP server, code
+    intelligence
+  key_symbols:
+  - mcp/server.go
+  - cmd/mnemo/main.go
+  dependencies:
+  - sqlite
+  - ollama
+  patterns:
+  - mcp-server
+  - vector-store
+  - dual-write
+  last_indexed: 2026-05-24 12:35
+- name: codegraph
+  path: gingx-codegraph/
+  description: Static code intelligence — callers, callees, impact analysis, code
+    indexing
+  key_symbols: []
+  dependencies: []
+  patterns:
+  - static-analysis
+  - knowledge-graph
+  last_indexed: 2026-05-24 12:35
+- name: agent-personas
+  path: .claude/agents/
+  description: Agent personas for Claude Code — architect, dev, devops, po, qa, ux,
+    supervisor, goal, explorer
+  key_symbols:
+  - architect-agent.md
+  - dev-agent.md
+  - devops-agent.md
+  - po-agent.md
+  - qa-agent.md
+  - ux-agent.md
+  - supervisor.md
+  - goal-agent.md
+  - explorer-agent.md
+  dependencies:
+  - mnemo
+  - codegraph
+  patterns:
+  - persona
+  - skill
+  - agent-factory
+  last_indexed: 2026-05-24 12:35
+- name: hooks
+  path: .claude/hooks/
+  description: Claude Code hooks — PreToolUse gate, SessionStart context loader, Stop
+    persistence
+  key_symbols:
+  - pre-tool-use.sh
+  - session-start.sh
+  - stop.sh
+  dependencies:
+  - mnemo
+  - codegraph
+  - gingx-sdd
+  patterns:
+  - hook
+  - gate
+  - persistence
+  last_indexed: 2026-05-24 12:35
+- name: profiles
+  path: .gingx/profiles/
+  description: Team/agent composition profiles — fullstack, langgraph, goal-autonomous,
+    etc.
+  key_symbols:
+  - developer.profile.yaml
+  - fullstack-python-langgraph.profile.yaml
+  - goal-autonomous.profile.yaml
+  dependencies:
+  - agent-personas
+  patterns:
+  - composition
+  - team-topology
+  last_indexed: 2026-05-24 12:35
+- name: templates
+  path: gingx-sdd/templates/
+  description: Project scaffolding templates — init creates from these
+  key_symbols: []
+  dependencies:
+  - sdd-core
+  patterns:
+  - scaffolding
+  - template
+  last_indexed: 2026-05-24 12:35
+cross_domain_edges:
+- from: sdd-core
+  to: mnemo
+  via:
+  - goal_tracker._sync_to_mnemo
+  - session-start.sh
+- from: sdd-core
+  to: codegraph
+  via:
+  - session-start.sh
+- from: hooks
+  to: sdd-core
+  via:
+  - pre-tool-use.sh calls gingx-sdd
+  - stop.sh calls mnemo
+- from: agent-personas
+  to: mnemo
+  via:
+  - all agents use mnemo search
+_updated_at: 2026-05-24 12:35

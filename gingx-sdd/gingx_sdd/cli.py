@@ -904,6 +904,654 @@ def knowledge_status():
         typer.echo(f"\nCodeGraph stats:\n{status['codegraph_stats']}")
     typer.echo(f"Mnemo installed: {'yes' if status['mnemo_installed'] else 'no'}")
 
+    # Knowledge graph files
+    knowledge_dir = Path.cwd() / ".gingx" / "knowledge"
+    typer.echo(f"\nKnowledge Graph (.gingx/knowledge/):")
+    for fname in ["domain-map.yaml", "component-index.yaml", "decisions-log.yaml"]:
+        kf = knowledge_dir / fname
+        if kf.exists():
+            import yaml as _yaml
+            data = _yaml.safe_load(kf.read_text()) or {}
+            count = len(data.get("domains", data.get("components", data.get("decisions", []))))
+            typer.echo(f"  {fname}: {count} entries")
+        else:
+            typer.echo(f"  {fname}: missing")
+
+
+@knowledge_app.command("search")
+def knowledge_search(
+    query: str = typer.Argument(..., help="Search query"),
+):
+    """Search across mnemo + codegraph + knowledge files."""
+    project_root = _find_project_root()
+    script = project_root / "gingx-sdd" / "gingx_sdd" / "knowledge_builder.sh"
+    if script.exists():
+        subprocess.run(["bash", str(script), "search", query])
+    else:
+        typer.echo("knowledge_builder.sh not found", err=True)
+
+
+@knowledge_app.command("explore")
+def knowledge_explore(
+    target: str = typer.Argument(..., help="Symbol, file path, or domain to explore"),
+):
+    """Deep-dive on a symbol: callers, callees, impact, semantic neighbors."""
+    project_root = _find_project_root()
+    script = project_root / "gingx-sdd" / "gingx_sdd" / "knowledge_builder.sh"
+    if script.exists():
+        subprocess.run(["bash", str(script), "explore", target])
+    else:
+        typer.echo("knowledge_builder.sh not found", err=True)
+
+
+@knowledge_app.command("save-decision")
+def knowledge_save_decision(
+    title: str = typer.Argument(..., help="Decision title"),
+    rationale: str = typer.Option("", "--rationale", "-r", help="Why this decision was made"),
+    trade_off: str = typer.Option("", "--trade-off", "-t", help="What this costs us"),
+):
+    """Log an architecture decision to decisions-log.yaml."""
+    project_root = _find_project_root()
+    script = project_root / "gingx-sdd" / "gingx_sdd" / "knowledge_builder.sh"
+    if script.exists():
+        subprocess.run(["bash", str(script), "save-decision", title, rationale, trade_off])
+    else:
+        typer.echo("knowledge_builder.sh not found", err=True)
+
+
+@knowledge_app.command("graph")
+def knowledge_graph(
+    output: str = typer.Option("", "--output", "-o", help="Output HTML file path (default: .gingx/knowledge/graph.html)"),
+    serve: bool = typer.Option(False, "--serve", "-s", help="Start a local HTTP server to view the graph"),
+    port: int = typer.Option(8765, "--port", "-p", help="Port for the server"),
+    open_browser: bool = typer.Option(True, "--open/--no-open", help="Open in browser automatically"),
+):
+    """Generate interactive domain graph visualization (D3.js force-directed).
+
+    Reads .gingx/knowledge/domain-map.yaml and renders an interactive
+    HTML graph showing domains, dependencies, and cross-domain edges.
+
+    Examples:
+        gingx-sdd knowledge graph                  # Open in browser
+        gingx-sdd knowledge graph -s               # Start server on :8765
+        gingx-sdd knowledge graph -o graph.html    # Save to file
+    """
+    import webbrowser
+    from pathlib import Path
+
+    project_root = _find_project_root()
+    knowledge_dir = project_root / ".gingx" / "knowledge"
+    domain_file = knowledge_dir / "domain-map.yaml"
+
+    if not domain_file.exists():
+        typer.echo("No domain-map.yaml found. Run: gingx-sdd knowledge index", err=True)
+        raise typer.Exit(1)
+
+    data = yaml.safe_load(domain_file.read_text()) or {}
+    domains = data.get("domains", [])
+    edges = data.get("cross_domain_edges", [])
+
+    if not domains:
+        typer.echo("Domain map is empty. Run: gingx-sdd knowledge index", err=True)
+        raise typer.Exit(1)
+
+    # Build nodes and links for D3
+    nodes_json = []
+    for i, d in enumerate(domains):
+        nodes_json.append({
+            "id": d["name"],
+            "path": d.get("path", ""),
+            "description": d.get("description", ""),
+            "patterns": d.get("patterns", []),
+            "group": i,
+        })
+
+    links_json = []
+    for edge in edges:
+        src = edge.get("from", "")
+        tgt = edge.get("to", "")
+        via = edge.get("via", [])
+        if src and tgt:
+            links_json.append({
+                "source": src,
+                "target": tgt,
+                "via": via,
+            })
+
+    project_name = project_root.name
+    html = _render_graph_html(project_name, nodes_json, links_json)
+
+    output_path = Path(output) if output else (knowledge_dir / "graph.html")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(html)
+    typer.echo(f"Graph saved: {output_path}")
+
+    if serve:
+        _serve_graph(output_path, port, open_browser)
+    elif open_browser:
+        webbrowser.open(f"file://{output_path.resolve()}")
+
+    typer.echo("\nTip: For a better graph experience, try: gingx-sdd knowledge vault")
+
+
+@knowledge_app.command("vault")
+def knowledge_vault(
+    output_dir: str = typer.Option("", "--output", "-o", help="Output directory (default: .gingx/knowledge/vault/)"),
+    open_vault: bool = typer.Option(True, "--open/--no-open", help="Open the vault directory in Finder"),
+):
+    """Generate an Obsidian vault from the knowledge graph.
+
+    Creates a navigable wiki with [[wikilinks]], YAML frontmatter,
+    and a Map of Content (Home.md). Open in Obsidian for native graph view.
+
+    The vault contains:
+      - Home.md — Map of Content with domain overview
+      - domains/{name}.md — one note per domain with dependencies
+      - components/{name}.md — one note per component with callers/callees
+      - decisions/{title}.md — architecture decision records
+    """
+    import os as _os
+    from datetime import datetime as _datetime
+
+    project_root = _find_project_root()
+    knowledge_dir = project_root / ".gingx" / "knowledge"
+    domain_file = knowledge_dir / "domain-map.yaml"
+    component_file = knowledge_dir / "component-index.yaml"
+    decisions_file = knowledge_dir / "decisions-log.yaml"
+
+    vault_dir = Path(output_dir) if output_dir else (knowledge_dir / "vault")
+    vault_dir.mkdir(parents=True, exist_ok=True)
+
+    domain_data = yaml.safe_load(domain_file.read_text()) if domain_file.exists() else {}
+    component_data = yaml.safe_load(component_file.read_text()) if component_file.exists() else {}
+    decision_data = yaml.safe_load(decisions_file.read_text()) if decisions_file.exists() else {}
+
+    domains = domain_data.get("domains", [])
+    edges = domain_data.get("cross_domain_edges", [])
+    components = component_data.get("components", {})
+    decisions = decision_data.get("decisions", [])
+
+    # Build domain lookup for quick access
+    domain_lookup = {d["name"]: d for d in domains}
+    domain_deps = {}  # domain -> list of (target_domain, via_list)
+    for edge in edges:
+        src = edge.get("from", "")
+        tgt = edge.get("to", "")
+        via = edge.get("via", [])
+        if src and tgt:
+            domain_deps.setdefault(src, []).append((tgt, via))
+
+    # Build component-to-domain mapping from path prefixes
+    comp_domain = {}
+    for name, comp in components.items():
+        comp_path = comp.get("path", "")
+        for d in domains:
+            dpath = d.get("path", "")
+            if dpath and comp_path.startswith(dpath):
+                comp_domain[name] = d["name"]
+                break
+
+    files_created = []
+
+    # ── Home.md (MOC) ───────────────────────────────────────────────
+    home_lines = [
+        "---",
+        f"project: {project_root.name}",
+        f"date: {_datetime.now().strftime('%Y-%m-%d')}",
+        "type: moc",
+        "tags: [knowledge-graph, moc]",
+        "---",
+        "",
+        f"# {project_root.name} — Knowledge Graph",
+        "",
+        "## Domains",
+        "",
+    ]
+    for d in domains:
+        dname = d["name"]
+        desc = d.get("description", "")[:120]
+        patterns = ", ".join(d.get("patterns", []))
+        home_lines.append(f"- **[[domains/{dname}|{dname}]]** — {desc}")
+        if patterns:
+            home_lines.append(f"  - _patterns_: {patterns}")
+    home_lines.append("")
+    home_lines.append("## Cross-Domain Edges")
+    home_lines.append("")
+    for edge in edges:
+        src = edge.get("from", "")
+        tgt = edge.get("to", "")
+        via = edge.get("via", [])
+        via_str = ", ".join(via[:3])
+        home_lines.append(f"- [[domains/{src}|{src}]] → [[domains/{tgt}|{tgt}]]")
+        if via_str:
+            home_lines.append(f"  - via: `{via_str}`")
+    home_lines.append("")
+
+    if components:
+        home_lines.append("## Key Components")
+        home_lines.append("")
+        for name in sorted(components.keys()):
+            home_lines.append(f"- [[components/{name}]]")
+        home_lines.append("")
+
+    if decisions:
+        home_lines.append("## Architecture Decisions")
+        home_lines.append("")
+        for dec in decisions:
+            dtitle = dec.get("title", "untitled")
+            dfile = dtitle.lower().replace(" ", "-").replace("/", "-")
+            home_lines.append(f"- [[decisions/{dfile}|{dtitle}]]")
+        home_lines.append("")
+
+    home_lines.append("## Graph View")
+    home_lines.append("")
+    home_lines.append("Open this vault in [Obsidian](https://obsidian.md) and use the **Graph View** (Ctrl+G) to see all connections.")
+    home_lines.append("")
+    home_lines.append("> Auto-generated by `gingx-sdd knowledge vault`. Re-run to refresh.")
+
+    home_path = vault_dir / "Home.md"
+    home_path.write_text("\n".join(home_lines) + "\n")
+    files_created.append(str(home_path))
+
+    # ── Domain notes ────────────────────────────────────────────────
+    domains_dir = vault_dir / "domains"
+    domains_dir.mkdir(exist_ok=True)
+
+    for d in domains:
+        dname = d["name"]
+        dpath = d.get("path", "")
+        desc = d.get("description", "")
+        symbols = d.get("key_symbols", [])
+        patterns = d.get("patterns", [])
+        deps = d.get("dependencies", [])
+        deps_from_edges = domain_deps.get(dname, [])
+
+        lines = [
+            "---",
+            f"domain: {dname}",
+            f"path: {dpath}",
+            f"tags: [domain, {dname}]",
+        ]
+        if patterns:
+            lines.append(f"patterns: [{', '.join(patterns)}]")
+        if deps:
+            lines.append(f"dependencies: [{', '.join(deps)}]")
+        lines.extend([
+            "---",
+            "",
+            f"# {dname}",
+            "",
+            desc,
+            "",
+        ])
+
+        if symbols:
+            lines.append("## Key Symbols")
+            lines.append("")
+            for s in symbols:
+                lines.append(f"- `{s}`")
+            lines.append("")
+
+        if deps:
+            lines.append("## Dependencies")
+            lines.append("")
+            for dep in deps:
+                lines.append(f"- [[{dep}]]")
+            lines.append("")
+
+        if deps_from_edges:
+            lines.append("## Cross-Domain Edges")
+            lines.append("")
+            for tgt, via in deps_from_edges:
+                lines.append(f"- → [[{tgt}]]")
+                for v in via:
+                    lines.append(f"  - `{v}`")
+            lines.append("")
+
+        if patterns:
+            lines.append("## Patterns")
+            lines.append("")
+            for p in patterns:
+                lines.append(f"- `{p}`")
+            lines.append("")
+
+        # Backlinks from edges (who depends on this domain)
+        backlinks = []
+        for edge in edges:
+            if edge.get("to") == dname:
+                backlinks.append((edge.get("from", ""), edge.get("via", [])))
+        if backlinks:
+            lines.append("## Depended On By")
+            lines.append("")
+            for src, via in backlinks:
+                lines.append(f"- [[{src}]]")
+                for v in via:
+                    lines.append(f"  - `{v}`")
+            lines.append("")
+
+        # Components in this domain
+        domain_comps = [cname for cname, cd in comp_domain.items() if cd == dname]
+        if domain_comps:
+            lines.append("## Components")
+            lines.append("")
+            for cname in sorted(domain_comps):
+                lines.append(f"- [[../components/{cname}|{cname}]]")
+            lines.append("")
+
+        note_path = domains_dir / f"{dname}.md"
+        note_path.write_text("\n".join(lines) + "\n")
+        files_created.append(str(note_path))
+
+    # ── Component notes ─────────────────────────────────────────────
+    if components:
+        comps_dir = vault_dir / "components"
+        comps_dir.mkdir(exist_ok=True)
+
+        for name, comp in components.items():
+            cpath = comp.get("path", "")
+            ctype = comp.get("type", "")
+            crole = comp.get("role", "")
+            callers = comp.get("callers", [])
+            callees = comp.get("callees", [])
+            ctests = comp.get("tests", [])
+            cdomain = comp_domain.get(name, "")
+
+            lines = [
+                "---",
+                f"component: {name}",
+                f"type: {ctype}",
+            ]
+            if cdomain:
+                lines.append(f"domain: {cdomain}")
+            lines.extend([
+                "---",
+                "",
+                f"# {name}",
+                "",
+                f"**Type:** `{ctype}`",
+                f"**Path:** `{cpath}`",
+                "",
+                crole,
+                "",
+            ])
+
+            if cdomain:
+                lines.append(f"**Domain:** [[../domains/{cdomain}|{cdomain}]]")
+                lines.append("")
+
+            if callers:
+                lines.append("## Callers")
+                lines.append("")
+                for c in callers:
+                    lines.append(f"- `{c}`")
+                lines.append("")
+
+            if callees:
+                lines.append("## Callees")
+                lines.append("")
+                for c in callees:
+                    lines.append(f"- `{c}`")
+                lines.append("")
+
+            if ctests:
+                lines.append("## Tests")
+                lines.append("")
+                for t in ctests:
+                    lines.append(f"- `{t}`")
+                lines.append("")
+
+            note_path = comps_dir / f"{name}.md"
+            note_path.write_text("\n".join(lines) + "\n")
+            files_created.append(str(note_path))
+
+    # ── Decision notes ──────────────────────────────────────────────
+    if decisions:
+        decs_dir = vault_dir / "decisions"
+        decs_dir.mkdir(exist_ok=True)
+
+        for dec in decisions:
+            dtitle = dec.get("title", "untitled")
+            ddate = dec.get("date", "")
+            drationale = dec.get("rationale", "")
+            dtradeoff = dec.get("trade_off", "")
+            dfile = dtitle.lower().replace(" ", "-").replace("/", "-")
+
+            lines = [
+                "---",
+                f"title: {dtitle}",
+                f"date: {ddate}",
+                "tags: [decision, adr]",
+                "---",
+                "",
+                f"# {dtitle}",
+                "",
+            ]
+            if drationale:
+                lines.append(f"## Rationale\n\n{drationale}\n")
+            if dtradeoff:
+                lines.append(f"## Trade-off\n\n{dtradeoff}\n")
+
+            note_path = decs_dir / f"{dfile}.md"
+            note_path.write_text("\n".join(lines) + "\n")
+            files_created.append(str(note_path))
+
+    # ── .obsidian config for graph colors ───────────────────────────
+    obsidian_dir = vault_dir / ".obsidian"
+    obsidian_dir.mkdir(exist_ok=True)
+
+    # Graph view settings — group by domain
+    graph_json = {
+        "collapse-filter": False,
+        "search": "",
+        "showTags": True,
+        "showAttachments": False,
+        "hideUnresolved": False,
+        "showOrphans": True,
+        "collapse-color-groups": False,
+        "colorGroups": [],
+        "collapse-display": False,
+        "showArrow": True,
+        "textFadeMultiplier": 0,
+        "nodeSizeMultiplier": 1.2,
+        "lineSizeMultiplier": 1.5,
+        "collapse-forces": False,
+        "centerStrength": 0.5,
+        "repelStrength": 10,
+        "linkStrength": 1,
+        "linkDistance": 200,
+        "scale": 0.7,
+    }
+    (obsidian_dir / "graph.json").write_text(
+        json.dumps(graph_json, indent=2) + "\n"
+    )
+
+    typer.echo(f"\nObsidian vault generated: {vault_dir}")
+    typer.echo(f"  {len(files_created)} files created")
+    typer.echo(f"\n  Home.md — Map of Content")
+    typer.echo(f"  domains/ — {len(domains)} domain notes")
+    typer.echo(f"  components/ — {len(components)} component notes")
+    if decisions:
+        typer.echo(f"  decisions/ — {len(decisions)} ADR notes")
+    typer.echo(f"\nTo view the graph:")
+    typer.echo(f"  1. Open Obsidian → 'Open folder as vault' → select: {vault_dir}")
+    typer.echo(f"  2. Press Ctrl+G (or Cmd+G) for Graph View")
+    typer.echo(f"  3. Re-run this command to refresh: gingx-sdd knowledge vault")
+
+    if open_vault:
+        _os.system(f"open '{vault_dir}'")
+
+
+def _serve_graph(html_path: Path, port: int, open_browser: bool):
+    """Start a minimal HTTP server to serve the graph HTML."""
+    import http.server
+    import socketserver
+    import webbrowser
+
+    # Serve from the HTML file's directory so CDN resources load
+    serve_dir = html_path.parent
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(serve_dir), **kwargs)
+
+    typer.echo(f"Starting graph server on http://localhost:{port}")
+    typer.echo("Press Ctrl+C to stop")
+
+    if open_browser:
+        webbrowser.open(f"http://localhost:{port}/{html_path.name}")
+
+    with socketserver.TCPServer(("", port), Handler) as httpd:
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            typer.echo("\nServer stopped.")
+
+
+def _render_graph_html(project_name: str, nodes: list[dict], links: list[dict]) -> str:
+    """Render domain graph as self-contained D3.js force-directed HTML."""
+    import json as _json
+    nodes_js = _json.dumps(nodes, indent=2)
+    links_js = _json.dumps(links, indent=2)
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Graph — {project_name}</title>
+<style>
+* {{ margin: 0; padding: 0; box-sizing: border-box; }}
+body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; overflow: hidden; }}
+#header {{ position: absolute; top: 16px; left: 16px; z-index: 10; }}
+#header h1 {{ font-size: 20px; color: #58a6ff; }}
+#header p {{ font-size: 13px; color: #8b949e; }}
+#graph {{ width: 100vw; height: 100vh; }}
+#tooltip {{ position: absolute; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; font-size: 13px; pointer-events: none; opacity: 0; max-width: 340px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }}
+#tooltip h3 {{ color: #58a6ff; margin-bottom: 4px; }}
+#tooltip .path {{ color: #8b949e; font-family: monospace; font-size: 11px; margin-bottom: 6px; }}
+#tooltip .desc {{ color: #c9d1d9; margin-bottom: 6px; }}
+#tooltip .patterns {{ display: flex; gap: 4px; flex-wrap: wrap; }}
+#tooltip .patterns span {{ background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb44; border-radius: 4px; padding: 2px 6px; font-size: 10px; }}
+.legend {{ position: absolute; bottom: 16px; left: 16px; z-index: 10; font-size: 11px; color: #8b949e; }}
+.legend span {{ margin-right: 12px; }}
+.legend .node-dot {{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }}
+</style>
+</head>
+<body>
+<div id="header">
+  <h1>Knowledge Graph — {project_name}</h1>
+  <p>{len(nodes)} domains, {len(links)} cross-domain edges</p>
+</div>
+<div id="tooltip"></div>
+<svg id="graph"></svg>
+<div class="legend">
+  <span><span class="node-dot" style="background:#58a6ff"></span> Domain</span>
+  <span style="color:#f78166">━</span> dependency edge
+  <span style="margin-left:8px">Drag nodes · Scroll to zoom</span>
+</div>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const nodes = {nodes_js};
+const links = {links_js};
+
+const width = window.innerWidth;
+const height = window.innerHeight;
+
+const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+const svg = d3.select("#graph")
+  .attr("viewBox", [0, 0, width, height]);
+
+const g = svg.append("g");
+
+const zoom = d3.zoom()
+  .scaleExtent([0.2, 4])
+  .on("zoom", (e) => g.attr("transform", e.transform));
+
+svg.call(zoom);
+svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.75));
+
+const tip = d3.select("#tooltip");
+
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(d => d.id).distance(160))
+  .force("charge", d3.forceManyBody().strength(-400))
+  .force("center", d3.forceCenter(0, 0))
+  .force("collision", d3.forceCollide().radius(40));
+
+const link = g.append("g")
+  .selectAll("line")
+  .data(links)
+  .join("line")
+  .attr("stroke", "#f78166")
+  .attr("stroke-opacity", 0.5)
+  .attr("stroke-width", 2)
+  .attr("marker-end", "url(#arrow)");
+
+// Arrowhead
+svg.append("defs").append("marker")
+  .attr("id", "arrow")
+  .attr("viewBox", "0 -5 10 10")
+  .attr("refX", 20)
+  .attr("refY", 0)
+  .attr("markerWidth", 8)
+  .attr("markerHeight", 8)
+  .attr("orient", "auto")
+  .append("path")
+  .attr("d", "M0,-5L10,0L0,5")
+  .attr("fill", "#f78166");
+
+const node = g.append("g")
+  .selectAll("g")
+  .data(nodes)
+  .join("g")
+  .attr("cursor", "grab")
+  .call(d3.drag()
+    .on("start", (e, d) => {{ if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }})
+    .on("drag", (e, d) => {{ d.fx = e.x; d.fy = e.y; }})
+    .on("end", (e, d) => {{ if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }})
+  );
+
+node.append("circle")
+  .attr("r", d => 10 + Math.min(d.patterns.length, 5) * 3)
+  .attr("fill", d => color(d.group))
+  .attr("stroke", "#30363d")
+  .attr("stroke-width", 2);
+
+node.append("text")
+  .text(d => d.id)
+  .attr("dy", d => 16 + (d.patterns.length * 2))
+  .attr("text-anchor", "middle")
+  .attr("fill", "#c9d1d9")
+  .attr("font-size", "12px")
+  .attr("pointer-events", "none");
+
+node.on("mouseenter", (e, d) => {{
+  tip.style("opacity", 1);
+  const pats = (d.patterns || []).map(p => `<span>${{p}}</span>`).join("");
+  tip.html(`<h3>${{d.id}}</h3>
+    <div class="path">${{d.path}}</div>
+    <div class="desc">${{d.description || ""}}</div>
+    <div class="patterns">${{pats}}</div>`);
+}}).on("mousemove", (e) => {{
+  tip.style("left", (e.pageX + 12) + "px")
+     .style("top", (e.pageY - 60) + "px");
+}}).on("mouseleave", () => {{
+  tip.style("opacity", 0);
+}});
+
+simulation.on("tick", () => {{
+  link
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+  node.attr("transform", d => `translate(${{d.x}},${{d.y}})`);
+}});
+</script>
+</body>
+</html>"""
+
 
 # ── Auto Command ─────────────────────────────────────────────────────
 
