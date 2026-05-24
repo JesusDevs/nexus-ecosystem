@@ -1,5 +1,5 @@
 """
-Nexus Mode System — interactive, automatic, dry_run, off.
+Gingx Mode System — interactive, automatic, dry_run, off.
 
 Writing the mode to .gingx/mode.yaml controls hook behavior.
 """

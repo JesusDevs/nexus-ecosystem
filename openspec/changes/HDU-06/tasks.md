@@ -5,7 +5,7 @@
 - [ ] 2. `swarm/orchestrator.go` — SQLite-backed task queue with claim/heartbeat
 - [ ] 3. `swarm/agent.go` — Agent lifecycle: spawn, heartbeat, death detection, reassign
 - [ ] 4. `swarm/dag.go` — DAG dependency resolver for phase ordering
-- [ ] 5. `nexus-sdd orchestrate <hdu-id>` — CLI command to launch swarm
+- [ ] 5. `gingx-sdd orchestrate <hdu-id>` — CLI command to launch swarm
 
 ## Phase 2 — Self-Evolving Skill Registry
 - [ ] 6. `registry/registry.go` — Skill database with tier management

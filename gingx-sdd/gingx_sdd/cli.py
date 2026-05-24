@@ -796,7 +796,7 @@ app.add_typer(mode_app, name="mode")
 def mode_set(
     mode: str = typer.Argument(..., help="interactive | automatic | dry_run | off"),
 ):
-    """Set the Nexus execution mode.
+    """Set the Gingx execution mode.
 
     interactive — explore, propose, pause for human decisions
     automatic  — advance phase by phase with fewer interruptions

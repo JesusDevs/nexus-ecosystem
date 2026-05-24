@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════
-# Nexus SDD Gate — PreToolUse Hook
+# Gingx SDD Gate — PreToolUse Hook
 # Blocks code writes without an approved spec.
 # V2: HDU blocker support + mode awareness.
 # "Sin spec no hay código. Sin respuesta no avanza."
@@ -56,7 +56,7 @@ if [[ "$FILE_PATH" =~ _test\.|test_|/tests/|/test/|\.test\.|_spec\.|spec_ ]]; th
     exit 0
 fi
 
-if [[ "$FILE_PATH" =~ ^\.(nexus|claude)/ ]]; then
+if [[ "$FILE_PATH" =~ ^\.(gingx|claude)/ ]]; then
     exit 0
 fi
 

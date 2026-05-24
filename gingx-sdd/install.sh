@@ -31,7 +31,7 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-log()    { echo -e "${BLUE}[NEXUS]${NC} $1"; }
+log()    { echo -e "${BLUE}[GINGX]${NC} $1"; }
 ok()     { echo -e "${GREEN}[✓]${NC} $1"; }
 info()   { echo -e "${CYAN}[i]${NC} $1"; }
 warn()   { echo -e "${YELLOW}[!]${NC} $1"; }
@@ -303,7 +303,7 @@ create_gingx_dir() {
 
     # SDD tracking file (which HDU is active)
     cat > .gingx/current_task.yaml << 'TASK'
-# Nexus SDD — Active Task Tracking
+# Gingx SDD — Active Task Tracking
 # This file is managed by gingx-sdd orchestrate and the PreToolUse hook.
 # When empty, code writes are blocked. Create a spec to unblock:
 #   gingx-sdd spec "Feature title"
@@ -469,7 +469,7 @@ print_summary() {
 main() {
     echo -e "\n${BOLD}${CYAN}"
     echo "╔══════════════════════════════════════════════╗"
-    echo "║   🏭  NEXUS-SDD  —  Fábrica de Software IA  ║"
+    echo "║   🏭  GINGX-SDD  —  Fábrica de Software IA  ║"
     echo "║       Zero-Friction Installer                ║"
     echo "╚══════════════════════════════════════════════╝"
     echo -e "${NC}\n"

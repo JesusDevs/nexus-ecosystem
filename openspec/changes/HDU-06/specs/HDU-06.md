@@ -61,7 +61,7 @@ And the user sees code in their preferred style without configuring anything
 Given the user is on branch "feature/add-2fa"
 And the last 3 edits were in "auth/" directory
 And mnemo has 12 memories about auth from 4 previous projects
-When the user opens their agent and runs nexus-sdd orchestrate
+When the user opens their agent and runs gingx-sdd orchestrate
 Then the predictor auto-loads 8 relevant memories before the user types anything
 And the agent greets: "Working on 2FA. I found 8 relevant memories including 2 bugs from HDU-03."
 And the context is pre-warmed, saving 15 minutes of manual search

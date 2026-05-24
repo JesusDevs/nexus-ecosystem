@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════
-# Nexus SDD Gate — PreToolUse Hook
+# Gingx SDD Gate — PreToolUse Hook
 # Blocks code writes without an approved spec.
 # V2: HDU blocker support + mode awareness.
 # "Sin spec no hay código. Sin respuesta no avanza."

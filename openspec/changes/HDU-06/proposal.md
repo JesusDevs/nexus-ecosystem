@@ -2,13 +2,13 @@
 
 ## Why
 
-gentle-ai/ATL solved orchestration but left memory as an afterthought (FTS5 keyword search). nexus-mnemo has semantic memory, versioning, and transfer — but no orchestration layer. The market has NO system that combines real vector memory with autonomous multi-agent orchestration, self-evolving skills, and predictive knowledge.
+gentle-ai/ATL solved orchestration but left memory as an afterthought (FTS5 keyword search). gingx-mnemo has semantic memory, versioning, and transfer — but no orchestration layer. The market has NO system that combines real vector memory with autonomous multi-agent orchestration, self-evolving skills, and predictive knowledge.
 
 This HDU is the convergence: a self-sustaining ecosystem where agents not only follow SDD — they improve the system itself, learn from every session, share knowledge across projects, and pre-load context before you even ask.
 
 ## What Changes
 
-### 1. Multi-Agent Swarm Orchestrator (`nexus-sdd orchestrate`)
+### 1. Multi-Agent Swarm Orchestrator (`gingx-sdd orchestrate`)
 Beyond delegate-only. Agents self-organize via a shared task queue with claim/heartbeat. The orchestrator spawns phase agents, monitors progress, and re-assigns failed tasks automatically. New agents can join mid-execution.
 
 ### 2. Self-Evolving Skill Registry

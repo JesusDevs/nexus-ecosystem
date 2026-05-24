@@ -43,7 +43,7 @@ except Exception:
         # Save progress to mnemo
         if command -v mnemo &>/dev/null; then
             mnemo save "Session checkpoint: $HDU" \
-                "Progress saved by Nexus Stop hook. HDU: $HDU" \
+                "Progress saved by Gingx Stop hook. HDU: $HDU" \
                 --type progress --outcome in_progress --project "$PROJECT" \
                 2>/dev/null || true
 

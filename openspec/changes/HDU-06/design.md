@@ -157,7 +157,7 @@ Resumes from last checkpoint
 
 ATL: 2 agents review code independently → compare → fix loop.
 
-Nexus Evolutionary:
+Gingx Evolutionary:
 ```
 Phase 1: SPEC COMPLIANCE
   - Map every spec scenario to test execution
@@ -292,7 +292,7 @@ These inform future task estimation and phase optimization.
 ## Architecture Overview
 
 ```
-nexus-mnemo/
+gingx-mnemo/
 ├── vec/store.go          # Vector DB (existing, extended with new tables)
 ├── vec/embed.go          # Embeddings (existing)
 ├── mcp/server.go         # MCP server (existing, 14 tools)

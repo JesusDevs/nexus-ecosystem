@@ -1,7 +1,7 @@
-# Design: Nexus-SDD Save Harness Integration
+# Design: Gingx-SDD Save Harness Integration
 
 ## Approach
-`nexus-sdd save --hdu-id <ID>`:
+`gingx-sdd save --hdu-id <ID>`:
 1. Reads `openspec/changes/<ID>/proposal.md` -> title and description
 2. Reads `openspec/changes/<ID>/design.md` -> extracts tech keywords as tags
 3. Reads `openspec/changes/<ID>/tasks.md` -> counts `[x]` vs `[ ]`, detects bugs
@@ -11,8 +11,8 @@
 
 Fallback: if mnemo CLI is not available, tries `_save_via_mcp()` which sends JSON-RPC directly to the MCP server.
 
-`nexus-sdd release <version>`:
-- Wrapper for `mnemo release <project> <version> --description "Release from nexus-sdd"`
+`gingx-sdd release <version>`:
+- Wrapper for `mnemo release <project> <version> --description "Release from gingx-sdd"`
 - Project is detected from `pyproject.toml` or root directory name
 
 ## Alternatives Considered

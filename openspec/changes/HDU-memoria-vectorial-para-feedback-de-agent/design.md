@@ -7,7 +7,7 @@ SQLite inside `~/.mnemo/mnemo.db` (standalone). New tables:
 
 MCP via JSON-RPC 2.0 over stdio. 8 tools total. Embeddings via local Ollama (bge-large-en-v1.5, 1024-dim). O(n) manual cosine similarity (sufficient for <100K memories).
 
-The harness (nexus-sdd) calls `mnemo` via subprocess for save/release. Will use MCP directly in the future.
+The harness (gingx-sdd) calls `mnemo` via subprocess for save/release. Will use MCP directly in the future.
 
 ## Alternatives Considered
 1. pgvector / Pinecone — Overkill. Adds external dependency. SQLite + cosine is sufficient for the use case (team memories, not millions).

@@ -10,8 +10,8 @@ AI agents start from zero in every session. Keyword search (FTS5) only matches e
 - `vec_releases` table for knowledge snapshots
 - CLI commands: `mnemo release`, `mnemo diff`, `mnemo releases`, `mnemo pack export`
 - New MCP tools: `mem_release`, `mem_diff`, `mem_list_releases`
-- `nexus-sdd save --hdu-id` for harness integration
-- `nexus-sdd release <version>` wrapper
+- `gingx-sdd save --hdu-id` for harness integration
+- `gingx-sdd release <version>` wrapper
 
 ## What Does NOT Change
 - Existing databases are untouched (new tables, not altered)
@@ -22,5 +22,5 @@ AI agents start from zero in every session. Keyword search (FTS5) only matches e
 ## Impact
 - HDU: HDU-memoria-vectorial-para-feedback-de-agent
 - Complexity: medium
-- Files: vec/store.go, mcp/server.go, main.go, nexus_sdd/cli.py
+- Files: vec/store.go, mcp/server.go, main.go, gingx_sdd/cli.py
 - MCP tools: 4 -> 8

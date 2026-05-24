@@ -12,7 +12,7 @@ ok()   { echo -e "${GREEN}[✓]${NC} $1"; }
 warn() { echo -e "${YELLOW}[!]${NC} $1"; }
 
 echo -e "\n${BOLD}${CYAN}╔══════════════════════════════════════════╗"
-echo "║  🧠  NEXUS-MNEMO — Memoria Versionable  ║"
+echo "║  🧠  GINGX-MNEMO — Memoria Versionable  ║"
 echo "║       Zero-Friction Installer            ║"
 echo -e "╚══════════════════════════════════════════╝${NC}\n"
 

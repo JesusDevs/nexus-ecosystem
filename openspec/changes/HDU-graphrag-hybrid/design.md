@@ -1,9 +1,9 @@
-# Design: GraphRAG Hybrid Layer for nexus-mnemo
+# Design: GraphRAG Hybrid Layer for gingx-mnemo
 
 ## Architecture Overview
 
 ```
-nexus-mnemo/
+gingx-mnemo/
 ├── vec/store.go          # Vector DB (existing, unchanged)
 ├── vec/embed.go          # Embeddings (existing, unchanged)
 ├── mcp/server.go         # MCP server (existing, extended with 6 graph tools)
@@ -35,7 +35,7 @@ Decision: SQLite adjacency list. The graph layer is for knowledge graphs (hundre
 
 ```sql
 CREATE TABLE IF NOT EXISTS graph_nodes (
-    id TEXT PRIMARY KEY,                          -- e.g. "node-nexus-ecosystem-paymentservice"
+    id TEXT PRIMARY KEY,                          -- e.g. "node-gingx-ecosystem-paymentservice"
     project TEXT NOT NULL DEFAULT '',              -- project namespace
     memory_id TEXT,                               -- FK to vec_memories.id (nullable: standalone nodes)
     label TEXT NOT NULL,                          -- human-readable name, e.g. "PaymentService"
@@ -54,7 +54,7 @@ CREATE INDEX IF NOT EXISTS idx_graph_nodes_memory_id ON graph_nodes(memory_id);
 CREATE INDEX IF NOT EXISTS idx_graph_nodes_type ON graph_nodes(node_type);
 
 CREATE TABLE IF NOT EXISTS graph_edges (
-    id TEXT PRIMARY KEY,                          -- e.g. "edge-nexus-ecosystem-paymentservice-taxrate"
+    id TEXT PRIMARY KEY,                          -- e.g. "edge-gingx-ecosystem-paymentservice-taxrate"
     project TEXT NOT NULL DEFAULT '',
     source_node_id TEXT NOT NULL,                 -- FK to graph_nodes.id
     target_node_id TEXT NOT NULL,                 -- FK to graph_nodes.id
@@ -85,7 +85,7 @@ CREATE INDEX IF NOT EXISTS idx_graph_edges_type ON graph_edges(relationship_type
 | `RELATES_TO` | General semantic relationship | "AuthService RELATES_TO SecurityPolicy" |
 | `CONTRADICTS` | A contradicts B | "Decision-JWT-15min CONTRADICTS Decision-JWT-24h" |
 | `SUPERSEDES` | A replaces B | "v2.0-auth SUPERSEDES v1.0-auth" |
-| `DERIVES_FROM` | A was derived from B (knowledge transfer) | "nexus-sdd-auth DERIVES_FROM banking-app-auth" |
+| `DERIVES_FROM` | A was derived from B (knowledge transfer) | "gingx-sdd-auth DERIVES_FROM banking-app-auth" |
 | `CONTAINS` | A is a parent/container of B | "PaymentModule CONTAINS PaymentService" |
 | `PRECEDES` | A must happen before B (temporal/ordering) | "Phase-Spec PRECEDES Phase-Design" |
 
@@ -367,7 +367,7 @@ This is the intellectual core of the HDU. The algorithm answers: "Given a natura
 
 ```
 Input: query="Which services break if I change the TaxRate field?",
-       project="nexus-ecosystem",
+       project="gingx-ecosystem",
        topK=3, minSimilarity=0.5, maxDepth=3,
        edgeTypes=["DEPENDS_ON", "CALLS", "READS_FROM", "WRITES_TO", "DEFINES_DATA"]
 
@@ -475,7 +475,7 @@ This hook is **optional** -- if the graph store is nil, DAG resolution works ide
 
 With the DAG persisted, the swarm orchestrator can answer questions like:
 ```
-> mnemo graph hybrid-search "what depends on task-5" --project nexus-ecosystem
+> mnemo graph hybrid-search "what depends on task-5" --project gingx-ecosystem
 → Returns all tasks that have task-5 in their dependency chain
 → Shows impact depth (1-hop = direct dependency, 2-hop = transitive)
 → Explains: "Delaying task-5 blocks 3 direct dependents and 7 transitive dependents"

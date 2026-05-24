@@ -1,4 +1,4 @@
-# Proposal: GraphRAG Hybrid Layer for nexus-mnemo
+# Proposal: GraphRAG Hybrid Layer for gingx-mnemo
 
 ## Why
 
@@ -10,13 +10,13 @@ The research saved to mnemo (Decision: GraphRAG hybrid approach, Vineet Chachond
 2. **Built-in explainability** -- every answer comes with an auditable path of nodes and edges showing exactly why it was reached
 3. **Contextual density** -- filter at the relationship level, not just content similarity, producing higher-signal results
 
-Meanwhile, HDU-06 defines `swarm/dag.go` for Component Dependency DAG resolution. That DAG is currently an in-memory transient structure. By persisting it as a graph layer inside nexus-mnemo, we get three wins at once: the DAG becomes durable and queryable, cross-session impact analysis becomes possible, and the graph layer serves both the swarm orchestrator and end-user queries.
+Meanwhile, HDU-06 defines `swarm/dag.go` for Component Dependency DAG resolution. That DAG is currently an in-memory transient structure. By persisting it as a graph layer inside gingx-mnemo, we get three wins at once: the DAG becomes durable and queryable, cross-session impact analysis becomes possible, and the graph layer serves both the swarm orchestrator and end-user queries.
 
 The hybrid pattern is: **vectors for fuzzy entry points** (natural language to entities), **graph traversal for relationship exploration** (entity to dependencies). This is not a replacement for vector search -- it is a complementary layer that answers the questions vector search cannot.
 
 ## What Changes
 
-### 1. Graph layer in nexus-mnemo (`graph/` package)
+### 1. Graph layer in gingx-mnemo (`graph/` package)
 New Go package adding SQLite-backed adjacency list on top of the existing vec/store.go. Two new tables (`graph_nodes`, `graph_edges`) coexist with `vec_memories` in the same SQLite database. No external graph database -- consistent with the project's zero-dependency, local-first architecture.
 
 ### 2. Node and edge model
@@ -72,7 +72,7 @@ Total MCP tools: 14 (HDU-06) to 20.
 ## Impact
 - HDU: HDU-graphrag-hybrid
 - Complexity: medium (one new Go package, ~6 files, no external deps)
-- New Go package: `graph/` within nexus-mnemo
+- New Go package: `graph/` within gingx-mnemo
 - New database tables: `graph_nodes`, `graph_edges`
 - New MCP tools: 6 (bringing total to 14 + 6 = 20)
 - New CLI commands: 4 (`mnemo graph add-node`, `add-edge`, `traverse`, `hybrid-search`)

@@ -250,7 +250,7 @@ var tools = []ToolDef{
 	},
 	{
 		Name:        "agent_dispatch",
-		Description: "Dispatches a task to a specialized Nexus agent persona (supervisor, po-agent, ux-agent, architect-agent, dev-agent, qa-agent, devops-agent). Loads the agent's persona definition, relevant tech stack skills from the profile, prior context from mnemo semantic search, and proactive interrogation prompts if the profile enables 'Tony Stark mode'. Returns the assembled agent prompt ready for execution.",
+		Description: "Dispatches a task to a specialized Gingx agent persona (supervisor, po-agent, ux-agent, architect-agent, dev-agent, qa-agent, devops-agent). Loads the agent's persona definition, relevant tech stack skills from the profile, prior context from mnemo semantic search, and proactive interrogation prompts if the profile enables 'Tony Stark mode'. Returns the assembled agent prompt ready for execution.",
 		InputSchema: JSONSchema{
 			Type: "object",
 			Properties: map[string]PropDef{

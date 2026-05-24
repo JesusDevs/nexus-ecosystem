@@ -92,7 +92,7 @@ mnemo config set k v      # Update config
 ```
 Env vars (OLLAMA_HOST, EMBEDDER_MOCK) act as overrides only.
 
-## 30 Harnesses — Nexus ↔ Gentle AI
+## 30 Harnesses — Gingx ↔ Gentle AI
 
 "Un harness transforma autonomía cruda en trabajo de ingeniería controlado." — Alan Buscaglia
 
@@ -100,7 +100,7 @@ Cada harness es un **contrato operacional**, no una sugerencia.
 Configuración completa en `.gingx/config.yaml`.
 
 ### Bloque 1: Orquestación y Contexto (4)
-| # | Harness | Nexus Implementación |
+| # | Harness | Gingx Implementación |
 |---|---------|-------------------|
 | 1 | **SDD Orchestrator** | `supervisor` + `orchestrate.py` — coordina, no ejecuta |
 | 2 | **Delegation** | inline (≤3 files) / delegate / full SDD |
@@ -108,7 +108,7 @@ Configuración completa en `.gingx/config.yaml`.
 | 4 | **Execution Mode** | `swarm.mode` (dag\|supervisor\|swarm\|hybrid) |
 
 ### Bloque 2: Fases y Artifactos (5)
-| # | Harness | Nexus Implementación |
+| # | Harness | Gingx Implementación |
 |---|---------|-------------------|
 | 5 | **Phase DAG** | PHASES order — no se salta etapas |
 | 6 | **Artifact Dependency** | spec→design→tasks→apply→verify |
@@ -117,14 +117,14 @@ Configuración completa en `.gingx/config.yaml`.
 | 9 | **Artifact Store** | híbrido: `openspec/changes/` + mnemo |
 
 ### Bloque 3: Calidad y Continuidad (3)
-| # | Harness | Nexus Implementación |
+| # | Harness | Gingx Implementación |
 |---|---------|-------------------|
 | 10 | **Strict TDD** | `dev-agent` — red, green, triangulate, refactor |
 | 11 | **Verify** | `qa-agent` — "terminé ≠ verificado" |
 | 12 | **Apply Continuity** | mnemo progress tracking entre sesiones |
 
 ### Bloque 4: Skills y Subagentes (4)
-| # | Harness | Nexus Implementación |
+| # | Harness | Gingx Implementación |
 |---|---------|-------------------|
 | 13 | **Skill Registry** | `skills/team/` + `extras/skills/` |
 | 14 | **Skill Digestion** | `build_prompt()` compacta reglas |
@@ -132,14 +132,14 @@ Configuración completa en `.gingx/config.yaml`.
 | 16 | **Subagent Isolation** | cada agente recibe solo su contexto |
 
 ### Bloque 5: Entrega (3)
-| # | Harness | Nexus Implementación |
+| # | Harness | Gingx Implementación |
 |---|---------|-------------------|
 | 17 | **Review Workload** | max 400 líneas/PR, 3 áreas |
 | 18 | **Delivery Strategy** | stacked PRs / feature track / ask on risk |
 | 19 | **Chain Strategy** | geometría de entrega (stacked\|feature_branch\|main) |
 
 ### Bloque 6: Extendidos (11)
-| # | Harness | Nexus Implementación |
+| # | Harness | Gingx Implementación |
 |---|---------|-------------------|
 | 20 | **Engram Memory** | **Mnemo** — vector memory + semantic search |
 | 21 | **Model Routing** | `/gentle models` — distintos modelos por fase |

@@ -4,7 +4,7 @@
 
 ### Release Command Flow
 ```
-nexus-sdd release v0.1.0 --project nexus-mnemo
+gingx-sdd release v0.1.0 --project gingx-mnemo
           │
           ├─ 1. Pre-release checks (--dry-run)
           │     ├─ Security scan: gitleaks or mnemo security
@@ -47,7 +47,7 @@ Mode is read from DB at the start of each phase — no restart needed.
 
 ### Harness Engineering Integration
 Following the Thoughtworks harness model:
-- **Feedforward guides**: Skills (.md) + AGENTS.md + .nexus/profiles/
+- **Feedforward guides**: Skills (.md) + AGENTS.md + .gingx/profiles/
 - **Computational sensors**: Security scan, build check, test coverage, dependency audit
 - **Inferential sensors**: QA agent adversarial testing, mnemo conflict detection
 - **Steering**: Hooks auto-update behavior based on detected patterns
@@ -58,4 +58,4 @@ Following the Thoughtworks harness model:
 2. **goreleaser** — Excellent for Go, but doesn't cover Python or mempacks. Can integrate later.
 
 ## Decision
-Custom release command in `nexus-sdd` (Python CLI) that delegates to git, mnemo, and shell for artifact building. Lightweight, portable, no new dependencies beyond `typer`.
+Custom release command in `gingx-sdd` (Python CLI) that delegates to git, mnemo, and shell for artifact building. Lightweight, portable, no new dependencies beyond `typer`.
