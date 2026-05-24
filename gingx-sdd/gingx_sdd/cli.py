@@ -1129,6 +1129,19 @@ def _find_project_root() -> Path:
     return current
 
 
+# ── Changelog Command ──────────────────────────────────────────────────
+
+@app.command()
+def changelog(
+    version: Optional[str] = typer.Option(None, "--version", "-v", help="Release version tag (e.g., v0.2.0)"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file path (default: CHANGELOG.md)"),
+):
+    """Generate CHANGELOG.md from openspec/changes/ HDUs."""
+    from gingx_sdd.changelog import generate_changelog
+    exit_code = generate_changelog(output_path=output, version=version)
+    raise typer.Exit(exit_code)
+
+
 # ── Entry Point ──────────────────────────────────────────────────────
 
 def main():

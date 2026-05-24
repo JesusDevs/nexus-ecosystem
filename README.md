@@ -14,13 +14,17 @@ gingx-ecosystem/
 └── .gingx/            # Local config, profiles, skill registry
 ```
 
+> **Language choice is pragmatic, not ideological.** Go handles performance-critical vector operations (mnemo). Python handles workflow orchestration (SDD harness). Each tool in its strength. Eventually the full CLI migrates to Go for zero-dependency distribution.
+
 ## Components
 
 ### gingx-mnemo — Vector Memory System
 
-SQLite + Ollama embeddings + cosine similarity. 8 MCP tools over stdio for universal agent compatibility (Claude Code, Codex, Cursor, Antigravity).
+SQLite + Ollama BGE-M3 embeddings + cosine similarity. 12 MCP tools over stdio for universal agent compatibility (Claude Code, Codex, Cursor, Antigravity, Kiro).
 
-- **9 MCP tools**: search, save, similar, transfer, release, diff, pack, conflicts, stats
+- **Portable memory** — `.gingx/memory/entries.jsonl` travels with the repo. Clone a project, get its agent memory. `embeddings.json` is gitignored and regenerable.
+- **Auto-import on session start** — hooks call `mnemo import` automatically. Zero-config knowledge transfer between teams.
+- **Dual-write on save** — every `mnemo save` writes to both the local DB and `.gingx/memory/entries.jsonl`.
 - **Zero external APIs** — Ollama local, SQLite, manual cosine similarity
 - **Model-agnostic `.mempack`** — text always included, embeddings as optional cache
 
@@ -28,11 +32,36 @@ SQLite + Ollama embeddings + cosine similarity. 8 MCP tools over stdio for unive
 mnemo search "UX pattern" --limit 5
 mnemo save "Decision" "What and why." --type decision --outcome resolved
 mnemo release v0.3.0              # Snapshot with release notes
+mnemo import                       # Import from .gingx/memory/entries.jsonl
 ```
 
 ### gingx-sdd — Spec-Driven Development Harness
 
-7 agent personas orchestrated through 8 phases. Each phase produces an artifact AND a memory.
+8-phase SDD pipeline orchestrated through 7 agent personas. Each phase produces an artifact AND a memory.
+
+```bash
+gingx-sdd init                        # Bootstrap a new project (23 files scaffolded)
+gingx-sdd status                      # Check active HDU and harness state
+gingx-sdd hdu create "Feature"        # Start a new HDU
+gingx-sdd orchestrate <HDU-ID>        # Delegate to multi-agent team
+```
+
+### Scaffolding (`gingx-sdd init`)
+
+Bootstraps a complete Gingx project from templates:
+
+| What | Where |
+|------|-------|
+| 7 SDD agent personas | `.claude/agents/` |
+| 3 enforcement hooks (executable) | `.claude/hooks/` |
+| Claude Code settings | `.claude/settings.local.json` |
+| 6 agent profiles + 1 team profile | `.gingx/profiles/` |
+| Project config + suites | `.gingx/config.yaml`, `.gingx/suites.yaml` |
+| Task tracking | `.gingx/current_task.yaml` |
+| OpenSpec structure | `openspec/AGENTS.md` + `changes/` |
+| MCP servers config | `.mcp.json` |
+
+### HDU Phases
 
 | Phase | Agent | Artifact |
 |-------|-------|----------|
@@ -47,30 +76,33 @@ mnemo release v0.3.0              # Snapshot with release notes
 
 ### Multi-Agent Team
 
+Scaffolded automatically by `gingx-sdd init`. 7 personas, each a Claude Code agent:
+
 | Agent | Trigger | Domain |
 |-------|---------|--------|
-| `/supervisor` | Orchestrate HDU | Decompose, delegate, track |
-| `/po-agent` | Define features | Specs, Gherkin, scope |
+| `/supervisor` | Orchestrate HDU | Decompose, delegate, track progress |
+| `/po-agent` | Define features | Specs, Gherkin, scope negotiation |
 | `/ux-agent` | Review UI/UX | Accessibility, usability, design memory |
-| `/architect-agent` | Design systems | Trade-offs, API/DB design |
-| `/dev-agent` | Implement | TDD, tests, code |
-| `/qa-agent` | Verify | Adversarial testing, root cause |
-| `/devops-agent` | Ship | CI/CD, security, releases, push |
+| `/architect-agent` | Design systems | Trade-offs, API/DB design, dependencies |
+| `/dev-agent` | Implement | TDD, test-first, code conventions |
+| `/qa-agent` | Verify | Adversarial testing, BDD, root cause |
+| `/devops-agent` | Ship | CI/CD, security scans, releases |
 
 ## Versioning
 
-Versionado mediante **mnemo releases**. Cada release es un snapshot de memoria vectorial + diff desde la release anterior.
+Versionado mediante **mnemo releases** + **SDD harness changelog generation**. Cada release es un snapshot de memoria vectorial generado desde los HDUs completados.
 
 ```bash
-gingx-sdd release v0.3.0          # Crea snapshot, genera changelog, guarda en mnemo
-mnemo release v0.3.0              # Release manual con diff y changelog
-mnemo releases                     # Historial de releases
+gingx-sdd changelog                # Generate CHANGELOG from openspec/changes/ (auto)
+gingx-sdd release v0.x.0           # Create snapshot, generate changelog, save to mnemo
+mnemo release v0.x.0               # Manual release with diff
+mnemo releases                     # Release history
 ```
 
 El versionado **es necesario** porque:
 - Cada release es un punto de restauracion en mnemo (backup harness #25)
 - Los agentes buscan en releases anteriores para decisiones informadas
-- El changelog se genera automaticamente desde mnemo diffs
+- El changelog se genera automaticamente desde los HDUs en `openspec/changes/`
 
 **Estrategia**: Semantic versioning. `0.x.y` mientras el proyecto esta en fase experimental. `MAJOR.MINOR.PATCH` cuando los 4 componentes esten estables.
 
@@ -105,23 +137,24 @@ Si la IA no puede responder estas preguntas con contexto, **no se escribe codigo
 ## Quick Start
 
 ```bash
-# 1. Instalar mnemo
-curl -fsSL https://raw.githubusercontent.com/JesusDevs/gingx-ecosystem/main/gingx-mnemo/install.sh | bash
+# 1. Install the ecosystem
+cd gingx-ecosystem
+./gingx-sdd/install.sh          # Python, Go, Ollama, mnemo, gingx-sdd
 
-# 2. Instalar gingx-sdd
-curl -fsSL https://raw.githubusercontent.com/JesusDevs/gingx-ecosystem/main/gingx-sdd/install.sh | bash
+# 2. Initialize a new project
+cd my-project
+gingx-sdd init                   # Scaffolds everything: agents, hooks, profiles, OpenSpec
 
-# 3. Inicializar un proyecto
-gingx-sdd spec "Mi feature" --project mi-proyecto
+# 3. Create your first HDU
+gingx-sdd hdu create "My first feature"
 
-# 4. Orquestar
+# 4. Orchestrate the multi-agent team
 gingx-sdd orchestrate <HDU-ID>
 
-# 5. Buscar en memoria antes de decidir
-mnemo search "decision similar" --project mi-proyecto --limit 5
+# 5. Search memory before any decision
+mnemo search "similar decisions" --limit 5
 
-# 6. Guardar despues de cada avance significativo
-gingx-sdd save --hdu-id <HDU-ID>
+# 6. Memory auto-saves via hooks. Portable via .gingx/memory/
 ```
 
 ## Philosophy
