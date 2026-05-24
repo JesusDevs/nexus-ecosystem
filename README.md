@@ -1,133 +1,193 @@
-# Gingx Ecosystem v0.3.0
+# Gingx Ecosystem v0.3.1
 
-**SDD harness + vector memory + autonomous agents + knowledge graph.** Convierte cualquier proyecto en un equipo multi-agente con memoria persistente, spec-driven development, y ejecución autónoma de objetivos.
+**Harness-driven AI development.** Spec → Plan → Code → Test → Security → Memory. Every phase is a contract. No code without an approved spec. Persistent vector memory that travels with the repo.
 
-## En 30 segundos
+## In 30 Seconds
 
 ```bash
-# 1. Inicializar cualquier proyecto con el ecosistema
-cd mi-proyecto
+# 1. Install everything (one command)
+curl -fsSL https://raw.githubusercontent.com/JesusDevs/gingx-ecosystem/main/gingx-sdd/install.sh | bash
+
+# 2. Bootstrap any project with the full ecosystem
+cd my-project
 gingx-sdd init
 
-# 2. El ecosistema ahora tiene 9 agentes, 3 hooks, 19 skills, 8 perfiles
-#     - memoria vectorial (mnemo) para búsqueda semántica entre sesiones
-#     - grafo de conocimiento (graphify) del codebase completo
-#     - spec-gate que bloquea código sin spec aprobada
-#     - goal-agent que ejecuta objetivos autónomamente (ej. overnight)
+# 3. Your project now has: 9 agents, 3 hooks, 19 skills, 8 profiles
+#    - vector memory (mnemo) for semantic search across sessions
+#    - knowledge graph (graphify) of the entire codebase
+#    - spec gate that blocks code writes without an approved spec
+#    - goal agent that runs objectives autonomously (e.g. overnight)
 
-# 3. Crear un HDU y delegar
-gingx-sdd hdu create "Mi feature" --question "¿Cuál es el stack?"
-gingx-sdd auto "implementar endpoint de health check"
+# 4. Create a spec and delegate to the right agent
+gingx-sdd hdu create "My feature" --question "What's the right stack?"
+gingx-sdd auto "implement health check endpoint"
 
-# 4. Lanzar un objetivo autónomo
-gingx-sdd goal create aprender-codebase \
-  --objective "Mapear y documentar toda la arquitectura" \
-  --key-results "KR1: domain-map completo, KR2: component-index, KR3: decisions log"
+# 5. Launch an autonomous goal
+gingx-sdd goal create map-architecture \
+  --objective "Map and document the entire architecture" \
+  --key-results "KR1: complete domain map, KR2: component index, KR3: decisions log"
 
-# 5. Todo se guarda en .gingx/memory/ — viaja con el repo
-git add .gingx/memory/entries.jsonl && git commit -m "memoria del equipo"
+# 6. Everything auto-saves. Memory travels with the repo.
+git add .gingx/memory/entries.jsonl && git commit -m "team memory"
 ```
 
-## Qué incluye
+## Why Python for the SDD Harness?
 
-| Capa | Componente | Lenguaje | Qué hace |
-|------|-----------|----------|----------|
-| **Memoria** | [gingx-mnemo](gingx-mnemo/) | Go | Vector memory con SQLite + Ollama embeddings. 12 MCP tools. Portable via `.gingx/memory/entries.jsonl` |
-| **SDD Harness** | [gingx-sdd](gingx-sdd/) | Python | 8 fases (explore→archive), 9 agentes, 30 harness contracts, goal system |
-| **Conocimiento** | Knowledge Graph | YAML + Obsidian + graphify | domain-map, component-index, decisions-log. Auto-generado y versionado |
-| **Agentes** | [.claude/agents/](.claude/agents/) | Markdown | 9 personas con triggers, reglas, y herramientas |
-| **Hooks** | [.claude/hooks/](.claude/hooks/) | Bash | SessionStart (carga contexto), PreToolUse (spec gate), Stop (persiste progreso) |
-| **Skills** | [skills/](gingx-sdd/skills/) + [extras/](gingx-sdd/extras/skills/) | Markdown | 9 team skills + 19 tech stack skills en 6 categorías |
-| **Perfiles** | [.gingx/profiles/](.gingx/profiles/) | YAML | 8 composiciones de equipo pre-armadas |
+**Pragmatic, not ideological.** Each layer uses the right tool:
 
-## Los 9 agentes
+| Layer | Language | Why |
+|-------|----------|-----|
+| **Vector memory** (mnemo) | **Go** | Performance-critical: embeddings, cosine similarity, SQLite. Compiles to a single static binary. Zero dependencies. |
+| **SDD harness** (gingx-sdd) | **Python** | Workflow orchestration: CLI (Typer), YAML config, LangGraph goal graphs, multi-agent dispatch, template rendering. Python is the best "glue" for stitching tools together. |
+| **Knowledge graph** (graphify) | **Python** | tree-sitter AST parsing, community detection (Leiden), LLM extraction. Rich ecosystem. |
+| **Agent personas** | **Markdown** | Portable across AI coding tools (Claude Code, Codex, Cursor, Kiro, Antigravity). |
 
-| # | Agente | Disparador | Qué hace |
-|---|--------|-----------|----------|
-| 1 | `supervisor` | Orquestar HDUs | Descompone, delega, trackea progreso entre fases |
-| 2 | `explorer-agent` | SessionStart, preguntas "dónde/cómo" | Mapea el codebase, mantiene el knowledge graph |
-| 3 | `po-agent` | Definir features | Specs, Gherkin, scope negotiation |
-| 4 | `architect-agent` | Diseñar sistemas | Trade-offs, DB schema, APIs, dependencias |
-| 5 | `dev-agent` | Implementar | TDD, test-first, convenciones de código |
-| 6 | `qa-agent` | Verificar | Adversarial testing, BDD, root cause |
-| 7 | `ux-agent` | Revisar UI/UX | Accesibilidad WCAG, usabilidad, diseño |
-| 8 | `devops-agent` | Shipping | CI/CD, security scans, releases |
-| 9 | `goal-agent` | Objetivos autónomos | Ejecuta goals sin interacción humana (overnight/weekend) |
+The CLI will progressively migrate to Go for zero-dependency distribution. Python remains the orchestration layer until then — the harness logic is complex enough that rapid iteration in Python delivers more value than a Go port right now.
 
-## Las 3 fases de operación
+## What's Included
+
+| Layer | Component | Language | What It Does |
+|------|-----------|----------|--------------|
+| **Memory** | [gingx-mnemo](gingx-mnemo/) | Go | Vector memory with SQLite + Ollama embeddings. 12 MCP tools. Portable via `.gingx/memory/entries.jsonl` |
+| **SDD Harness** | [gingx-sdd](gingx-sdd/) | Python | 8-phase pipeline, 9 agents, 30 harness contracts, goal system, auto-delegation |
+| **Knowledge** | Knowledge Graph | YAML + Obsidian + graphify | domain-map, component-index, decisions-log. Auto-generated, versioned, visualized |
+| **Agents** | [.claude/agents/](.claude/agents/) | Markdown | 9 personas with triggers, rules, and tool access |
+| **Hooks** | [.claude/hooks/](.claude/hooks/) | Bash | SessionStart (load context), PreToolUse (spec gate), Stop (persist progress) |
+| **Skills** | [skills/](gingx-sdd/skills/) + [extras/](gingx-sdd/extras/skills/) | Markdown | 9 team skills + 19 tech stack skills across 6 categories |
+| **Profiles** | [.gingx/profiles/](.gingx/profiles/) | YAML | 8 pre-built team compositions |
+
+## The 9 Agents
+
+| # | Agent | Trigger | What It Does |
+|---|-------|---------|--------------|
+| 1 | `supervisor` | Orchestrate HDUs | Decompose, delegate, track progress across phases |
+| 2 | `explorer-agent` | SessionStart, "where/how" questions | Map the codebase, maintain the knowledge graph |
+| 3 | `po-agent` | Define features | Specs, Gherkin scenarios, scope negotiation |
+| 4 | `architect-agent` | Design systems | Trade-offs, DB schemas, API contracts, dependencies |
+| 5 | `dev-agent` | Implement | TDD, test-first, code conventions |
+| 6 | `qa-agent` | Verify | Adversarial testing, BDD validation, root cause |
+| 7 | `ux-agent` | Review UI/UX | Accessibility (WCAG), usability, design patterns |
+| 8 | `devops-agent` | Ship | CI/CD, security scans, dependency audits |
+| 9 | `goal-agent` | Autonomous objectives | Executes goals without human interaction (overnight/weekend) |
+
+## The 3-Phase Operation Cycle
 
 ```
-SessionStart                  Sesión activa                   Stop
-───────────                   ─────────────                   ────
-carga contexto        →   9 agentes trabajan     →    persiste progreso
-knowledge graph             spec gate activo           knowledge vault refresh
-mnemo sync pull             memoria vectorial          mnemo sync push
-HDUs activos                goal loops                 HDU timestamps
-blockers                    auto-delegation            graphify update
+SessionStart                  Active Session                   Stop
+───────────                   ──────────────                   ────
+Load context          →   9 agents work            →   Persist progress
+Load knowledge graph       Spec gate active             Refresh Obsidian vault
+Mnemo sync pull            Vector memory queries        Graphify AST update (code)
+Active HDUs + blockers     Goal loops                   Mnemo sync push
+Import portable memory     Auto-delegation              Knowledge export
 ```
 
-## Cómo usar en otro proyecto
+## Installation
+
+### Automatic (recommended)
 
 ```bash
-# Opción A — Instalación completa (recomendada para equipos)
+# One command. Installs Python, Go, Node, Ollama, mnemo, gingx-sdd, graphify, codegraph.
+curl -fsSL https://raw.githubusercontent.com/JesusDevs/gingx-ecosystem/main/gingx-sdd/install.sh | bash
+```
+
+What it does:
+1. Detects OS (macOS, Linux, Windows)
+2. Installs prerequisites: Python 3.11+, Go, Node 20+
+3. Installs Ollama + BGE-M3 embedding model (local, zero API cost)
+4. Compiles `mnemo` from source → `/usr/local/bin/mnemo`
+5. Installs `gingx-sdd` Python package (`pip install -e`)
+6. Creates `.gingx/` directory structure (config, profiles, tracking)
+7. Configures Claude Code: copies hooks, agents, settings, MCP servers
+8. Registers graphify skill (`graphify claude install`)
+9. Detects project stack and installs matching skills
+10. Initializes OpenSpec structure
+
+### Manual
+
+```bash
+git clone https://github.com/JesusDevs/gingx-ecosystem.git
 cd gingx-ecosystem
-./gingx-sdd/install.sh                    # Go, Python, Ollama, mnemo, graphify
 
-# Opción B — Solo el CLI (desarrollo individual)
-pip install -e gingx-sdd/
+# Install mnemo (Go)
+cd gingx-mnemo && go build -o mnemo . && cp mnemo /usr/local/bin/
+
+# Install gingx-sdd (Python)
+cd ../gingx-sdd && pip install -e .
+
+# Install graphify
+uv tool install graphifyy && graphify claude install
+
+# Bootstrap a project
+cd ~/my-project && gingx-sdd init
 ```
 
+## Using the Ecosystem in Another Project
+
 ```bash
-# Inicializar un proyecto nuevo
-cd ~/mi-nuevo-proyecto
-gingx-sdd init                             # scaffolds 23+ archivos
+cd ~/my-new-project
+gingx-sdd init                          # scaffolds 23+ files
 
-# Elegir stack (afecta qué skills se cargan)
-gingx-sdd init --stack langgraph           # AI + LangGraph + FastAPI
-gingx-sdd init --stack go                  # Go + fiber
-gingx-sdd init --stack react               # React + Next.js
-gingx-sdd init --stack minimal             # Solo lo esencial
+# Pick a stack (affects which skills are loaded)
+gingx-sdd init --stack langgraph        # AI + LangGraph + FastAPI
+gingx-sdd init --stack go               # Go + Fiber
+gingx-sdd init --stack react            # React + Next.js
+gingx-sdd init --stack minimal          # Bare essentials only
 
-# Ver qué se crea sin escribir
+# Preview without writing
 gingx-sdd init --dry-run
 
-# Sobrescribir config existente
+# Overwrite existing config
 gingx-sdd init --force
 ```
 
-### Después del init, tu proyecto tiene:
+### After Init, Your Project Has:
 
 ```
-mi-proyecto/
+my-project/
 ├── .claude/
-│   ├── agents/           # 8 agentes (todos menos goal-agent por defecto)
+│   ├── agents/           # 8 agent personas
 │   ├── hooks/            # 3 hooks: SessionStart, PreToolUse, Stop
 │   └── settings.local.json
 ├── .gingx/
 │   ├── config.yaml       # 30 harness contracts
-│   ├── profiles/         # 7 perfiles de equipo
-│   ├── knowledge/        # domain-map, component-index (auto-generados)
-│   ├── memory/           # entries.jsonl — memoria portable del equipo
-│   ├── goals/            # objetivos autónomos (goal-agent)
-│   └── current_task.yaml # tracking de HDU activo
+│   ├── profiles/         # 7 team profiles
+│   ├── knowledge/        # domain-map, component-index (auto-generated)
+│   ├── memory/           # entries.jsonl — portable team memory
+│   ├── goals/            # autonomous goal definitions
+│   └── current_task.yaml # active HDU tracking
 ├── openspec/
 │   ├── AGENTS.md
 │   └── changes/
 └── .mcp.json             # mnemo + codegraph MCP servers
 ```
 
-## Cómo agregar más skills
+## Auto-Update Matrix
 
-Las skills son archivos Markdown con frontmatter. Se auto-cargan por categoría.
+Everything stays current without manual intervention:
 
-### Agregar un tech stack skill
+| What | Hook | Trigger |
+|------|------|---------|
+| Knowledge graph (domain-map) | SessionStart | First run (auto-discover) |
+| Knowledge timestamps | Stop | Every session end |
+| Obsidian vault refresh | Stop | Every session end |
+| Graphify AST update (code only) | Stop | Every session end |
+| Mnemo knowledge export | Stop | Every session end |
+| Mnemo sync push | Stop | Every session end |
+| Mnemo import (portable memory) | SessionStart | Every session start |
+| Mnemo sync pull | SessionStart | Every session start |
+
+## Adding More Skills
+
+Skills are Markdown files with YAML frontmatter. Auto-discovered by `gingx-sdd team list`.
+
+### Add a Tech Stack Skill
 
 ```bash
-# Crear el archivo en la categoría correcta
 cat > gingx-sdd/extras/skills/backend/rust.md << 'EOF'
 ---
 name: rust
-description: Rust language conventions — ownership, borrowing, async, tokio
+description: Rust conventions — ownership, borrowing, async, tokio
 category: backend
 model: sonnet
 effort: high
@@ -136,27 +196,25 @@ effort: high
 # Rust Conventions
 
 ## Rules
-- Clippy strict. No warnings allowed in CI.
+- Clippy strict. No warnings in CI.
 - `cargo test` before every commit.
 - Use `anyhow` for application errors, `thiserror` for libraries.
-- Async: tokio + axum for web, tracing for observability.
 
 ## Patterns
 - Repository pattern with sqlx
 - Actor model with actix for concurrency
-- Builder pattern for complex configs
 EOF
 ```
 
-**Categorías disponibles:** `ai/`, `backend/`, `mobile/`, `web/`, `testing/`, `infra/`
+**Categories:** `ai/`, `backend/`, `mobile/`, `web/`, `testing/`, `infra/`
 
-### Agregar un agent persona skill
+### Add an Agent Persona Skill
 
 ```bash
 cat > gingx-sdd/skills/team/security-agent.md << 'EOF'
 ---
 name: security-agent
-description: Security auditor — OWASP, secret scanning, dependency audit
+description: Security auditor — OWASP, secrets, dependency audit
 model: sonnet
 effort: high
 tools: Bash, Read, Grep, Glob
@@ -167,83 +225,69 @@ trigger: /security-audit
 
 ## Your Job
 1. Scan for OWASP Top 10 vulnerabilities
-2. Audit dependencies with known CVEs
+2. Audit dependencies for known CVEs
 3. Check for hardcoded secrets
-4. Review auth flows for common weaknesses
 
 ## Protocol
 - `gitleaks detect --no-git` first
-- `safety check` for Python, `cargo audit` for Rust, `npm audit` for JS
 - Report: severity, file, line, remediation
 EOF
 ```
 
-Luego se registra en un perfil o se invoca directamente:
+Then register it in a profile:
 ```bash
 gingx-sdd team spawn security-agent -t "audit auth module" --profile developer
 ```
 
-### Cómo funcionan las skills
+## Adding More Hooks
 
-- **auto-discovery**: `gingx-sdd team list` escanea `skills/team/` y `extras/skills/`
-- **frontmatter YAML**: name, description, model, effort
-- **carga por perfil**: cada perfil YAML asigna skills a agentes
-- **digestión**: el sistema compacta skills a ≤10 reglas por agente antes de enviar
+Hooks are bash scripts in `.claude/hooks/`. Claude Code runs them automatically.
 
-## Cómo agregar más hooks
+| Hook | When | Use For |
+|------|------|---------|
+| `SessionStart` | Session begins | Load context, knowledge graph, blockers |
+| `PreToolUse` | Before each tool call | Block tools without approved spec |
+| `PostToolUse` | After each tool call | Logging, metrics, auto-save |
+| `PostToolBatch` | After tool batch | Post-change validation |
+| `Stop` | Session ends | Persist progress, sync mnemo, update graph |
+| `PreCompact` | Before context compression | Save decisions before losing context |
+| `Notification` | System notifications | Blockers, completed goals |
 
-Los hooks son scripts bash en `.claude/hooks/`. Claude Code los ejecuta automáticamente.
-
-### Tipos de hooks disponibles
-
-| Hook | Cuándo se ejecuta | Para qué sirve |
-|------|------------------|----------------|
-| `SessionStart` | Al iniciar sesión | Cargar contexto, knowledge graph, blockers |
-| `PreToolUse` | Antes de cada tool call | Bloquear herramientas sin spec aprobada |
-| `PostToolUse` | Después de cada tool call | Logging, métricas, auto-save |
-| `PostToolBatch` | Después de lote de tools | Validación post-cambios |
-| `Stop` | Al terminar sesión | Persistir progreso, sync mnemo, graphify |
-| `PreCompact` | Antes de comprimir contexto | Guardar decisiones antes de perder contexto |
-| `Notification` | En notificaciones del sistema | Alertas de blockers o goals completados |
-
-### Crear un hook nuevo
+### Create a New Hook
 
 ```bash
 cat > .claude/hooks/PostToolUse.sh << 'EOF'
 #!/usr/bin/env bash
-# Track tool usage for cost/performance metrics
 set -euo pipefail
 
 TOOL_NAME="${CLAUDE_TOOL_NAME:-unknown}"
 DURATION_MS="${CLAUDE_TOOL_DURATION_MS:-0}"
 PROJECT=$(basename "$(pwd)")
 
-# Log to mnemo for analytics
+# Log tool usage for cost/performance metrics
 if command -v mnemo &>/dev/null; then
     mnemo save "Tool: $TOOL_NAME" \
-        "Duration: ${DURATION_MS}ms, Project: $PROJECT" \
-        --type metric --outcome in_progress \
-        --tags tool-usage,performance \
+        "Duration: ${DURATION_MS}ms" \
+        --type metric --tags tool-usage,performance \
         2>/dev/null || true
 fi
 
 echo '{"continue": true}'
-exit 0
 EOF
 
 chmod +x .claude/hooks/PostToolUse.sh
 ```
 
-### Variables disponibles en hooks
+### Hook Environment Variables
 
-- `$CLAUDE_TOOL_NAME` — nombre de la herramienta
-- `$CLAUDE_TOOL_INPUT` — input de la herramienta (JSON)
-- `$CLAUDE_PROJECT` — nombre del proyecto
-- `$CLAUDE_SESSION_ID` — ID único de sesión
+- `$CLAUDE_TOOL_NAME` — tool name
+- `$CLAUDE_TOOL_INPUT` — tool input (JSON)
+- `$CLAUDE_PROJECT` — project name
+- `$CLAUDE_SESSION_ID` — unique session ID
 
-## Cómo agregar más agentes
+## Adding More Agents
 
-### 1. Crear el persona file
+### 1. Create the Persona File
 
 ```bash
 cat > .claude/agents/data-engineer-agent.md << 'EOF'
@@ -253,7 +297,7 @@ description: Data pipeline engineer — ETL, schemas, data quality
 tools: Bash, Read, Write, Grep, Glob
 when_to_use: |
   Use when designing data pipelines, schemas, or ETL flows.
-  Triggers on keywords: "pipeline", "ETL", "schema", "data quality".
+  Triggers on: "pipeline", "ETL", "schema", "data quality".
 ---
 
 # Data Engineer Agent
@@ -262,169 +306,131 @@ when_to_use: |
 1. Design and review database schemas
 2. Build ETL pipeline definitions
 3. Data quality validation rules
-4. Query optimization
-
-## Before Acting
-- Check mnemo for prior schema decisions
-- Review existing pipelines in the codebase
-- Validate against data contracts
 EOF
 ```
 
-### 2. Agregarlo a un perfil
+### 2. Add to a Profile
 
 ```yaml
-# En .gingx/profiles/developer.profile.yaml
+# In .gingx/profiles/developer.profile.yaml
 agents:
   data-engineer-agent:
     model: sonnet
     tech_stack: [python-core, postgres]
 ```
 
-### 3. Agregarlo a la fase SDD (opcional)
-
-```yaml
-# En .gingx/config.yaml, harness.orchestrator.phase_agent_map:
-data_pipeline: data-engineer-agent
-```
-
-### 4. Usarlo
+### 3. Use It
 
 ```bash
-gingx-sdd team spawn data-engineer-agent -t "design ETL for user events" --profile developer
+gingx-sdd team spawn data-engineer-agent -t "design ETL for user events"
 ```
 
 ## Knowledge Graph
 
-El ecosistema mantiene un grafo de conocimiento vivo del codebase:
+A living knowledge graph of the codebase, maintained by the explorer agent:
 
 ```bash
-# Ver estado del knowledge graph
-gingx-sdd knowledge status
-
-# Explorar un símbolo (callers, callees, impacto)
-gingx-sdd knowledge explore GoalState
-
-# Buscar en mnemo + codegraph + knowledge files
-gingx-sdd knowledge search "auth pattern"
-
-# Guardar una decisión de arquitectura
-gingx-sdd knowledge save-decision "Usar Redis para caching" \
-  --rationale "Menos de 1ms de latencia, equipo ya lo conoce" \
-  --trade-off "Costo de infraestructura adicional"
-
-# Generar vault de Obsidian (graph view nativo)
-gingx-sdd knowledge vault
-
-# Grafo completo con graphify (2467 nodos en este repo)
-/graphify . --update   # incremental, solo archivos cambiados
+gingx-sdd knowledge status                  # graph + codegraph + mnemo status
+gingx-sdd knowledge explore GoalState       # callers, callees, impact
+gingx-sdd knowledge search "auth pattern"   # cross-search all layers
+gingx-sdd knowledge save-decision "Use Redis" --rationale "..." --trade-off "..."
+gingx-sdd knowledge vault                   # generate Obsidian vault with [[wikilinks]]
+/graphify . --update                        # incremental graph update (code-only = free)
 ```
 
-### Capas del knowledge graph
+### Knowledge Layers
 
-| Archivo | Qué contiene | Auto-generado |
-|---------|-------------|---------------|
-| `domain-map.yaml` | Dominios, símbolos clave, dependencias, patrones | SessionStart hook |
-| `component-index.yaml` | Componentes con callers/callees, tipo, rol | Explorer agent |
-| `decisions-log.yaml` | ADR: decisiones, racional, trade-offs | Manual via `knowledge save-decision` |
-| `vault/` | Obsidian vault con [[wikilinks]] y graph view | Stop hook (auto-refresh) |
-| `graphify-out/` | Grafo completo: graph.json, GRAPH_REPORT.md, graph.html | `/graphify .` |
+| File | Contents | Auto-Generated |
+|------|----------|----------------|
+| `domain-map.yaml` | Domains, key symbols, dependencies, patterns | SessionStart hook |
+| `component-index.yaml` | Components with callers/callees, type, role | Explorer agent |
+| `decisions-log.yaml` | Architecture decisions with rationale | Manual (`knowledge save-decision`) |
+| `vault/` | Obsidian vault with [[wikilinks]] + graph view | Stop hook (auto-refresh) |
+| `graphify-out/` | Full graph: graph.json, GRAPH_REPORT.md, graph.html | `/graphify .` |
 
 ## Goal System v0.3.0
 
-Objetivos autónomos que ejecuta el goal-agent sin interacción humana:
+Autonomous objectives executed by the goal-agent without human interaction:
 
 ```bash
-# Crear un goal
-gingx-sdd goal create documentar-auth \
-  --objective "Documentar todo el sistema de autenticación" \
-  --key-results "KR1: diagrama de flujo OAuth2, KR2: documentar SessionStore, KR3: test cases documentados" \
+gingx-sdd goal create document-auth \
+  --objective "Document the entire auth system" \
+  --key-results "KR1: OAuth2 flow diagram, KR2: SessionStore docs, KR3: test cases" \
   --max-iterations 30
 
-# Ver progreso
-gingx-sdd goal status documentar-auth
+gingx-sdd goal status document-auth
 gingx-sdd goal list
 
-# Lanzar loop autónomo (usar con /loop en Claude Code)
+# Launch autonomous loop
 gingx-sdd team spawn goal-agent \
-  -t "Execute next step for goal documentar-auth" \
+  -t "Execute next step for goal document-auth" \
   --profile goal-autonomous
 
-# Completar o bloquear
-gingx-sdd goal complete documentar-auth
-gingx-sdd goal complete refactor-db --blocked --reason "Esperando migración de prod"
+gingx-sdd goal complete document-auth
+gingx-sdd goal complete refactor-db --blocked --reason "Waiting for prod migration"
 ```
 
-**GoalGraph pattern** (LangGraph): `plan → act → observe → reflect` con checkpoints entre sesiones.
+**GoalGraph pattern** (LangGraph): `plan → act → observe → reflect` with checkpoints across sessions.
 
-## Perfiles de equipo
+## Team Profiles
 
-8 perfiles pre-armados para diferentes tipos de proyecto:
+8 pre-built profiles for different project types:
 
-| Perfil | Agentes | Stack | Ideal para |
-|--------|---------|-------|------------|
-| `developer` | Los 9 agentes | python-core, fastapi | Desarrollo general |
-| `fullstack` | 7 agentes | react, fastapi, postgres | Apps web full-stack |
-| `fullstack-go` | 7 agentes | go-fiber, react | Backend Go + frontend |
-| `fullstack-python-langgraph` | 9 agentes | langgraph-python, fastapi, ai | Apps AI + agentes |
-| `goal-autonomous` | goal-agent | goal, langgraph | Overnight/weekend autónomo |
-| `react-nextjs` | 7 agentes | nextjs, react, tailwind | Frontend pesado |
-| `minimal` | 4 agentes (dev, qa, architect, supervisor) | python-core | Prototipos rápidos |
-| `team` | 9 agentes | variable | Convenciones de equipo |
+| Profile | Agents | Stack | Best For |
+|---------|--------|-------|----------|
+| `developer` | All 9 agents | python-core, fastapi | General development |
+| `fullstack` | 7 agents | react, fastapi, postgres | Full-stack web apps |
+| `fullstack-go` | 7 agents | go-fiber, react | Go backend + frontend |
+| `fullstack-python-langgraph` | 9 agents | langgraph-python, fastapi | AI + agent apps |
+| `goal-autonomous` | goal-agent | goal, langgraph | Overnight/weekend autonomous |
+| `react-nextjs` | 7 agents | nextjs, react, tailwind | Frontend-heavy |
+| `minimal` | 4 agents | python-core | Quick prototypes |
+| `team` | 9 agents | variable | Team conventions |
 
 ```bash
-# Cambiar perfil activo
 gingx-sdd team profile set fullstack-python-langgraph
 gingx-sdd team profile show
 gingx-sdd team profile list
 ```
 
-## Modos de ejecución
+## Execution Modes
 
 ```bash
-# Interactivo — pide confirmación en decisiones importantes
-gingx-sdd mode set interactive
-
-# Automático — avanza fase por fase con menos interrupciones
-gingx-sdd mode set automatic
-
-# Dry run — solo pre-release checks, sin ejecución real
-gingx-sdd mode set dry_run
-
-# Off — harness desactivado, modo libre
-gingx-sdd mode set off
-
+gingx-sdd mode set interactive   # Ask for confirmation on key decisions
+gingx-sdd mode set automatic     # Advance phase by phase, fewer interruptions
+gingx-sdd mode set dry_run       # Pre-release checks only, no execution
+gingx-sdd mode set off           # Harness disabled, free mode
 gingx-sdd mode status
 ```
 
-## Comandos esenciales
+## Essential Commands
 
 ```bash
-# Info del ecosistema
-gingx-sdd status                     # HDU activo, modo, blockers
+# Ecosystem info
+gingx-sdd status                     # Active HDU, mode, blockers
 gingx-sdd knowledge status           # Knowledge graph + codegraph + mnemo
-gingx-sdd team list                  # Agentes y skills disponibles
-gingx-sdd team profile show          # Perfil activo
-gingx-sdd changelog                  # Generar CHANGELOG desde HDUs
+gingx-sdd team list                  # Available agents and skills
+gingx-sdd team profile show          # Active profile
+gingx-sdd changelog                  # Generate CHANGELOG from HDUs
 
-# Memoria
-mnemo search "patrón similar" --project $(basename $(pwd)) --limit 5
-mnemo save "Decisión" "Qué y por qué" --type decision --outcome resolved
-mnemo stats                          # Estadísticas del store
-mnemo import                         # Importar desde .gingx/memory/
+# Memory
+mnemo search "similar pattern" --project $(basename $(pwd)) --limit 5
+mnemo save "Decision" "What and why" --type decision --outcome resolved
+mnemo stats                          # Store statistics
+mnemo import                         # Import from .gingx/memory/
 ```
 
-## Filosofía
+## Philosophy
 
-> "Un harness transforma autonomía cruda en trabajo de ingeniería controlado." — Alan Buscaglia, Gentle AI
+> "A harness transforms raw autonomy into controlled engineering work." — Alan Buscaglia, Gentle AI
 
-30 harness contracts en `.gingx/config.yaml`. Cada uno es un **contrato operacional**, no una sugerencia.
+30 harness contracts in `.gingx/config.yaml`. Each is an **operational contract**, not a suggestion.
 
-**Principios:**
-- **No hay código sin spec.** El spec gate bloquea Write/Edit si no hay spec aprobada.
-- **La memoria viaja con el repo.** `.gingx/memory/entries.jsonl` se commitea. Clone = memoria del equipo.
-- **Cada agente recibe solo su contexto.** Subagent isolation: el dev no ve todo el repo, solo lo que necesita.
-- **Autonomía con trazabilidad.** Cada goal deja historia en `.gingx/goals/<id>.yaml`.
+**Principles:**
+- **No spec, no code.** The spec gate blocks Write/Edit without an approved spec.
+- **Memory travels with the repo.** `.gingx/memory/entries.jsonl` is committed. Clone = team memory.
+- **Each agent gets only its context.** Subagent isolation: the dev agent doesn't see the whole repo.
+- **Autonomy with traceability.** Every goal leaves history in `.gingx/goals/<id>.yaml`.
 
 ---
 
