@@ -4,6 +4,40 @@ Generated from SDD harness (`gingx-sdd changelog`). Each entry comes from comple
 
 ---
 
+## v0.3.1 — Knowledge Graph + Explorer Agent (2026-05-24)
+
+### New Features
+
+**Explorer Agent** (9th agent persona)
+- First responder for codebase questions. Maps domains, discovers patterns.
+- Maintains knowledge graph: domain-map.yaml, component-index.yaml, decisions-log.yaml
+- Auto-triggered on SessionStart, before architect-agent
+
+**Knowledge Graph Layer**
+- `domain-map.yaml`: 7 domains with key symbols, dependencies, patterns, cross-domain edges
+- `component-index.yaml`: 9 components with callers, callees, tests, domain assignment
+- `decisions-log.yaml`: architecture decision records with rationale and trade-offs
+- Auto-generated on first session start, incrementally updated on every stop
+- `gingx-sdd knowledge vault` — Obsidian vault with [[wikilinks]] and native graph view
+- `gingx-sdd knowledge status|search|explore|save-decision` — knowledge CLI ops
+
+**Graphify Integration**
+- Full codebase graph: 2,467 nodes, 4,547 edges, 157 communities
+- AST-only incremental update in stop hook (code changes auto-refresh, no LLM cost)
+
+**Obsidian Vault Auto-Refresh**
+- Stop hook regenerates vault on every session end
+- Home.md (MOC) + domains/ + components/ + .obsidian/graph.json
+
+### Improvements
+
+- README complete rewrite with practical usage: init projects, add skills/hooks/agents
+- Phase agent map: explore routes to explorer-agent (was architect-agent)
+- Stop hook graphify call fixed (broken → Python API incremental)
+- Auto-update matrix: knowledge graph + vault + graphify + mnemo all in hooks
+
+---
+
 ## v0.3.0 — Autonomous Goal System (2026-05-24)
 
 ### New Features
