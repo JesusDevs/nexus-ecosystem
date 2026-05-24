@@ -24,6 +24,20 @@ app = typer.Typer(
 )
 
 
+# ── Init Command ──────────────────────────────────────────────────────
+
+@app.command()
+def init(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview without writing files"),
+    force: bool = typer.Option(False, "--force", help="Overwrite existing .gingx/"),
+    stack: Optional[str] = typer.Option(None, "--stack", help="Force a specific stack (python, go, react, node, langgraph, minimal)"),
+):
+    """Initialize a Gingx SDD project — scaffolds .gingx/, hooks, profiles, OpenSpec."""
+    from gingx_sdd.init_project import init_project
+    exit_code = init_project(dry_run=dry_run, force=force, stack=stack)
+    raise typer.Exit(exit_code)
+
+
 # ── Spec Command ─────────────────────────────────────────────────────
 
 @app.command()
