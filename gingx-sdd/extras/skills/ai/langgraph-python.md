@@ -150,6 +150,28 @@ async def stream_agent(request: AgentRequest):
 - **LangGraph Cloud**: Deploy serverless con streaming + checkpointer gestionado.
 - **LangGraph Studio**: IDE visual para debuggear grafos.
 
+### GoalGraph (Autonomous Loop)
+```python
+# GoalGraph: plan-act-observe-reflect para trabajo autónomo
+class GoalState(TypedDict):
+    objective: str
+    key_results: list[str]
+    progress: dict[str, float]
+    history: Annotated[list, operator.add]
+    iteration: int
+    status: str  # active | blocked | completed
+
+workflow = StateGraph(GoalState)
+workflow.add_node("planner", planner)
+workflow.add_node("executor", executor)
+workflow.add_node("observer", observer)
+workflow.add_node("reflector", reflector)
+workflow.add_conditional_edges("reflector", should_continue, {
+    "continue": "planner", "completed": END, "blocked": END,
+})
+```
+Ver `goal` skill para el patrón completo (plan-act-observe-reflect, ScheduleWakeup, checkpointing).
+
 ## Recommended Commands
 - `pip install langgraph langchain langchain-openai langfuse` — Core
 - `pip install langgraph-cli` — Deploy a LangGraph Cloud

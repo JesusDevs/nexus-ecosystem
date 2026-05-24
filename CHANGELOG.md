@@ -4,6 +4,33 @@ Generated from SDD harness (`gingx-sdd changelog`). Each entry comes from comple
 
 ---
 
+## v0.3.0 — Autonomous Goal System (2026-05-24)
+
+### New Features
+
+**Goal System for Autonomous Agents**
+- `gingx-sdd goal` command group: `create`, `list`, `status`, `loop`, `complete`
+- `goal-agent` persona: autonomous executor that works without human interaction
+- `goal-autonomous` profile: reduced interrogation, no human-in-the-loop, designed for overnight/weekend work
+- `goal` tech stack skill: GoalGraph pattern with plan-act-observe-reflect cycle
+- `GoalStore` / `GoalState`: YAML persistence in `.gingx/goals/<id>.yaml` with mnemo sync
+- `ai-goal` suite: pre-packaged langgraph-python + goal + fastapi + bdd-behave
+
+**GoalGraph Pattern** (LangGraph)
+- StateGraph with GoalState (objective, key_results, progress, history, iteration)
+- 4-node cycle: planner → executor → observer → reflector
+- Completion criteria: all KRs at 100% OR max_iterations reached
+- Checkpointed execution for resilience between sessions
+
+### Improvements
+
+- `gingx-sdd init --stack langgraph` now includes goal-agent.md persona and `.gingx/goals/` directory
+- `fullstack-python-langgraph` profile extended with goal-agent
+- `langgraph-python` skill updated with GoalGraph pattern reference
+- team spawn help now lists goal-agent
+
+---
+
 ## v0.2.0 — Ecosystem Foundation (2026-05-23)
 
 ### New Features

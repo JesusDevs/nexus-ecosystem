@@ -1,0 +1,33 @@
+name: goal-autonomous
+description: "Autonomous goal execution with LangGraph — overnight/weekend agent"
+type: solo
+
+default_model: sonnet
+default_stack: [python, langgraph-python, goal]
+
+proactive_interrogation: false
+interrogation_depth: shallow
+
+agents:
+  goal-agent:
+    model: sonnet
+    effort: high
+    tech_stack: [python, langgraph-python, goal, pytest]
+
+patterns:
+  preferred:
+    - goal-graph
+    - plan-act-observe-reflect
+    - checkpointed-execution
+    - autonomous-loop
+    - state-graph
+  avoided:
+    - human-in-the-loop
+    - interactive-prompts
+    - blocking-questions
+    - linear-chains
+
+testing:
+  frameworks: [pytest, pytest-asyncio]
+  coverage_target: 80
+  bdd_required: false

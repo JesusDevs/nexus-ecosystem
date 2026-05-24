@@ -26,6 +26,10 @@ agents:
     tech_stack: [python, pytest, playwright, bdd-behave]
   devops-agent:
     tech_stack: [python, docker-kubernetes, github-actions, sql-database]
+  goal-agent:
+    tech_stack: [python, langgraph-python, goal, pytest]
+    model: sonnet
+    effort: high
 
 patterns:
   preferred:

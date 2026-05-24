@@ -968,7 +968,7 @@ app.add_typer(team_app, name="team")
 
 @team_app.command("spawn")
 def team_spawn(
-    agent: str = typer.Argument(..., help="Agent: supervisor, po-agent, ux-agent, architect-agent, dev-agent, qa-agent, devops-agent"),
+    agent: str = typer.Argument(..., help="Agent: supervisor, po-agent, ux-agent, architect-agent, dev-agent, qa-agent, devops-agent, goal-agent"),
     task: str = typer.Option(..., "--task", "-t", help="Task description"),
     profile_name: str = typer.Option("developer", "--profile", "-p", help="Profile name"),
     hdu_id: Optional[str] = typer.Option(None, "--hdu-id", help="HDU context"),
@@ -1118,6 +1118,188 @@ def team_profile(
                 typer.echo(f"  {ag_name}: {ag_cfg.model}, stack={tech}")
         else:
             typer.echo(f"Profile '{active}' not loaded.", err=True)
+
+
+# ── Goal Command Group ────────────────────────────────────────────────
+
+goal_app = typer.Typer(
+    help="Autonomous goal management — create, track, and execute goals",
+    no_args_is_help=True,
+)
+app.add_typer(goal_app, name="goal")
+
+
+@goal_app.command("create")
+def goal_create(
+    title: str = typer.Argument(..., help="Goal title (kebab-case ID)"),
+    objective: str = typer.Option(..., "--objective", "-o", help="Goal objective — what to achieve"),
+    key_results: str = typer.Option("", "--key-results", "-k", help="Comma-separated key results"),
+    max_iterations: int = typer.Option(50, "--max-iterations", "-m", help="Max iterations before auto-block"),
+):
+    """Create a new autonomous goal."""
+    from .goal_tracker import GoalStore
+
+    project_root = _find_project_root()
+    store = GoalStore(project_root / ".gingx")
+
+    goal_id = title.lower().replace(" ", "-")
+    if store.exists(goal_id):
+        typer.echo(f"Goal '{goal_id}' already exists. Use a different title.", err=True)
+        raise typer.Exit(1)
+
+    krs = [kr.strip() for kr in key_results.split(",") if kr.strip()] if key_results else []
+    if not krs:
+        typer.echo("Error: --key-results is required (comma-separated)", err=True)
+        raise typer.Exit(1)
+
+    goal = store.create(
+        goal_id=goal_id,
+        objective=objective,
+        key_results=krs,
+        max_iterations=max_iterations,
+    )
+
+    typer.echo(f"\nGoal '{goal.goal_id}' created.")
+    typer.echo(f"  Objective: {goal.objective}")
+    typer.echo(f"  Key Results ({len(goal.key_results)}):")
+    for i, kr in enumerate(goal.key_results):
+        typer.echo(f"    [{i+1}] {kr.description} (progress: {kr.progress:.0%})")
+    typer.echo(f"  Max iterations: {goal.max_iterations}")
+    typer.echo(f"\nStart the loop: gingx-sdd goal loop {goal.goal_id}")
+
+
+@goal_app.command("list")
+def goal_list():
+    """List all goals and their progress."""
+    from .goal_tracker import GoalStore
+
+    project_root = _find_project_root()
+    store = GoalStore(project_root / ".gingx")
+    goals = store.load_all()
+
+    if not goals:
+        typer.echo("No goals found. Create one with: gingx-sdd goal create")
+        return
+
+    typer.echo(f"\n{len(goals)} goal(s):\n")
+    for goal in goals:
+        status_icon = {"active": "◎", "blocked": "⊘", "completed": "✓", "archived": "⚐"}
+        icon = status_icon.get(goal.status, "?")
+        progress = goal.overall_progress()
+        typer.echo(f"  {icon} {goal.goal_id} ({goal.status}) — {progress:.0%}")
+        typer.echo(f"    {goal.objective[:100]}")
+        typer.echo(f"    Iter {goal.iteration}/{goal.max_iterations}")
+
+
+@goal_app.command("status")
+def goal_status(
+    goal_id: str = typer.Argument(..., help="Goal ID to inspect"),
+):
+    """Show detailed goal status and key result progress."""
+    from .goal_tracker import GoalStore
+
+    project_root = _find_project_root()
+    store = GoalStore(project_root / ".gingx")
+    goal = store.get(goal_id)
+
+    if not goal:
+        typer.echo(f"Goal '{goal_id}' not found.", err=True)
+        raise typer.Exit(1)
+
+    status_icon = {"active": "◎", "blocked": "⊘", "completed": "✓", "archived": "⚐"}
+    icon = status_icon.get(goal.status, "?")
+
+    typer.echo(f"\n{icon} Goal: {goal.goal_id}")
+    typer.echo(f"  Status: {goal.status}")
+    typer.echo(f"  Objective: {goal.objective}")
+    typer.echo(f"  Progress: {goal.overall_progress():.0%}")
+    typer.echo(f"  Iteration: {goal.iteration}/{goal.max_iterations}")
+    if goal.current_step:
+        typer.echo(f"  Current step: {goal.current_step}")
+    if goal.blocked_reason:
+        typer.echo(f"  Blocked reason: {goal.blocked_reason}")
+    typer.echo(f"\n  Key Results:")
+    for i, kr in enumerate(goal.key_results):
+        bar = "█" * int(kr.progress * 20) + "░" * (20 - int(kr.progress * 20))
+        typer.echo(f"    [{bar}] {kr.description} ({kr.progress:.0%})")
+    typer.echo(f"\n  History ({len(goal.history)} entries):")
+    for entry in goal.history[-5:]:
+        typer.echo(f"    - {entry[:120]}")
+    if len(goal.history) > 5:
+        typer.echo(f"    ... and {len(goal.history) - 5} more entries")
+
+
+@goal_app.command("loop")
+def goal_loop(
+    goal_id: str = typer.Argument(..., help="Goal ID to start loop for"),
+    interval: str = typer.Option("auto", "--interval", "-i", help="Loop interval: auto, 60s, 120s, 300s"),
+):
+    """Start autonomous goal execution loop.
+
+    The agent will work on this goal iteratively using plan-act-observe-reflect.
+    Uses self-paced wakeups via ScheduleWakeup when possible.
+    """
+    from .goal_tracker import GoalStore
+
+    project_root = _find_project_root()
+    store = GoalStore(project_root / ".gingx")
+    goal = store.get(goal_id)
+
+    if not goal:
+        typer.echo(f"Goal '{goal_id}' not found. Create it first.", err=True)
+        raise typer.Exit(1)
+
+    if goal.status == "completed":
+        typer.echo(f"Goal '{goal_id}' is already completed.")
+        return
+
+    if goal.status == "blocked":
+        typer.echo(f"Goal '{goal_id}' is blocked: {goal.blocked_reason}")
+        typer.echo("Unblock by editing .gingx/goals/{goal_id}.yaml and setting status back to 'active'.")
+        return
+
+    # Activate the goal
+    goal.status = "active"
+    store.save(goal)
+
+    typer.echo(f"\nStarting autonomous loop for goal: {goal.goal_id}")
+    typer.echo(f"  Objective: {goal.objective}")
+    typer.echo(f"  Iteration: {goal.iteration}/{goal.max_iterations}")
+    typer.echo(f"  Progress: {goal.overall_progress():.0%}")
+    typer.echo()
+    typer.echo("To run the goal agent, use:")
+    typer.echo(f"  gingx-sdd team spawn goal-agent -t 'Work on goal {goal_id}' --profile goal-autonomous")
+    typer.echo()
+    typer.echo("Or use Claude Code loop:")
+    typer.echo(f"  /loop 5m gingx-sdd goal status {goal_id} && gingx-sdd team spawn goal-agent -t 'Execute next step for goal {goal_id}' --profile goal-autonomous")
+
+
+@goal_app.command("complete")
+def goal_complete(
+    goal_id: str = typer.Argument(..., help="Goal ID to complete"),
+    blocked: bool = typer.Option(False, "--blocked", help="Mark as blocked instead of completed"),
+    reason: str = typer.Option("", "--reason", "-r", help="Reason for blocking"),
+):
+    """Mark a goal as completed or blocked."""
+    from .goal_tracker import GoalStore
+
+    project_root = _find_project_root()
+    store = GoalStore(project_root / ".gingx")
+    goal = store.get(goal_id)
+
+    if not goal:
+        typer.echo(f"Goal '{goal_id}' not found.", err=True)
+        raise typer.Exit(1)
+
+    if blocked:
+        if not reason:
+            typer.echo("Error: --reason is required when --blocked is set.", err=True)
+            raise typer.Exit(1)
+        store.mark_blocked(goal_id, reason)
+        typer.echo(f"Goal '{goal_id}' marked as BLOCKED: {reason}")
+    else:
+        store.mark_completed(goal_id)
+        typer.echo(f"Goal '{goal_id}' marked as COMPLETED. All KRs set to 100%.")
 
 
 def _find_project_root() -> Path:

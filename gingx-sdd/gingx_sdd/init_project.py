@@ -79,6 +79,7 @@ _DRY_RUN_FILES = [
     ".claude/agents/architect-agent.md",
     ".claude/agents/dev-agent.md",
     ".claude/agents/devops-agent.md",
+    ".claude/agents/goal-agent.md",
     ".claude/agents/po-agent.md",
     ".claude/agents/qa-agent.md",
     ".claude/agents/supervisor.md",
@@ -89,6 +90,7 @@ _DRY_RUN_FILES = [
     ".claude/settings.local.json",
     ".gingx/config.yaml",
     ".gingx/current_task.yaml",
+    ".gingx/goals/",
     ".gingx/profiles/",
     ".gingx/suites.yaml",
     ".mcp.json",
@@ -196,7 +198,11 @@ def init_project(
         (openspec_dir / "changes").mkdir(exist_ok=True)
         created.append("openspec/")
 
-    # ── .claude/agents/ (7 SDD personas) ─────────────────────────────
+    # ── .gingx/goals/ ───────────────────────────────────────────────
+    (gingx_dir / "goals").mkdir(parents=True, exist_ok=True)
+    created.append(".gingx/goals/")
+
+    # ── .claude/agents/ (8 SDD personas) ─────────────────────────────
     agents_tpl = templates / ".claude" / "agents"
     if agents_tpl.is_dir():
         agents_dst = cwd / ".claude" / "agents"

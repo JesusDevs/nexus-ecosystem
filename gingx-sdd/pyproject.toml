@@ -1,6 +1,6 @@
 [project]
 name = "gingx-sdd"
-version = "0.2.0"
+version = "0.3.0"
 description = "SDD Framework — Spec-Driven Development with Gingx-Mnemo vector memory + multi-agent team personas"
 requires-python = ">=3.11"
 dependencies = [

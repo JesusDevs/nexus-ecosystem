@@ -113,6 +113,14 @@ suites:
       - langgraph-python
       - fastapi
 
+  ai-goal:
+    description: Agente autónomo con Goals + LangGraph
+    skills:
+      - langgraph-python
+      - goal
+      - fastapi
+      - bdd-behave
+
   # ── DevOps ─────────────────────────────────────────────────
   devops:
     description: CI/CD + Infraestructura
