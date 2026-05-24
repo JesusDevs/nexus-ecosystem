@@ -1,6 +1,7 @@
 package vec
 
 import (
+	"bufio"
 	"bytes"
 	"database/sql"
 	"encoding/binary"
@@ -862,9 +863,146 @@ func (s *Store) DB() *sql.DB {
 	return s.db
 }
 
+// EntryExists returns true if an entry with the given ID exists in the DB.
+func (s *Store) EntryExists(id string) bool {
+	var unused string
+	err := s.db.QueryRow("SELECT id FROM vec_memories WHERE id = ?", id).Scan(&unused)
+	return err == nil
+}
+
 // Close closes the database.
 func (s *Store) Close() error {
 	return s.db.Close()
+}
+
+// ── Portable Memory (`.gingx/memory/`) ────────────────────────────────
+
+// MemoryJSONEntry is a portable JSONL line — text-only, no embedding binary.
+type MemoryJSONEntry struct {
+	ID             string   `json:"id"`
+	Project        string   `json:"project"`
+	Title          string   `json:"title"`
+	Content        string   `json:"content"`
+	Type           string   `json:"type"`
+	Tags           []string `json:"tags"`
+	Outcome        string   `json:"outcome"`
+	MediaType      string   `json:"media_type"`
+	Version        string   `json:"version"`
+	EmbeddingModel string   `json:"embedding_model"`
+	EmbeddingDim   int      `json:"embedding_dim"`
+	CreatedAt      string   `json:"created_at"`
+}
+
+// SerializeEntryJSON returns a single JSONL line for a VectorMemory (no embedding binary).
+func SerializeEntryJSON(mem *VectorMemory) ([]byte, error) {
+	e := MemoryJSONEntry{
+		ID:             mem.ID,
+		Project:        mem.Project,
+		Title:          mem.Title,
+		Content:        mem.Content,
+		Type:           mem.Type,
+		Tags:           mem.Tags,
+		Outcome:        mem.Outcome,
+		MediaType:      mem.MediaType,
+		Version:        mem.Version,
+		EmbeddingModel: mem.EmbeddingModel,
+		EmbeddingDim:   mem.EmbeddingDim,
+		CreatedAt:      time.Now().Format("2006-01-02 15:04:05"),
+	}
+	data, err := json.Marshal(e)
+	return append(data, '\n'), err
+}
+
+// FindGingxDir walks up from cwd (max 5 levels) looking for .gingx/.
+func FindGingxDir() (string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	dir := cwd
+	for i := 0; i < 5; i++ {
+		gingxDir := filepath.Join(dir, ".gingx")
+		if info, e := os.Stat(gingxDir); e == nil && info.IsDir() {
+			return gingxDir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return "", fmt.Errorf(".gingx/ not found")
+}
+
+// AppendToMemoryFiles writes entry JSONL to entries.jsonl and updates embeddings.json.
+func AppendToMemoryFiles(gingxDir string, mem *VectorMemory) error {
+	memDir := filepath.Join(gingxDir, "memory")
+	if err := os.MkdirAll(memDir, 0755); err != nil {
+		return err
+	}
+
+	// Append JSONL line to entries.jsonl
+	line, err := SerializeEntryJSON(mem)
+	if err != nil {
+		return err
+	}
+	entriesPath := filepath.Join(memDir, "entries.jsonl")
+	f, err := os.OpenFile(entriesPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	if _, err := f.Write(line); err != nil {
+		f.Close()
+		return err
+	}
+	f.Close()
+
+	// Update embeddings.json
+	embPath := filepath.Join(memDir, "embeddings.json")
+	embeddings := make(map[string][]float32)
+	if data, rErr := os.ReadFile(embPath); rErr == nil {
+		json.Unmarshal(data, &embeddings)
+	}
+	embeddings[mem.ID] = mem.Embedding
+	data, _ := json.MarshalIndent(embeddings, "", "  ")
+	return os.WriteFile(embPath, append(data, '\n'), 0644)
+}
+
+// ReadMemoryEntries reads all entries from a JSONL file.
+func ReadMemoryEntries(path string) ([]MemoryJSONEntry, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var entries []MemoryJSONEntry
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		var e MemoryJSONEntry
+		if err := json.Unmarshal([]byte(line), &e); err != nil {
+			continue
+		}
+		entries = append(entries, e)
+	}
+	return entries, scanner.Err()
+}
+
+// ReadEmbeddings reads the embeddings.json file.
+func ReadEmbeddings(path string) (map[string][]float32, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	embeddings := make(map[string][]float32)
+	if err := json.Unmarshal(data, &embeddings); err != nil {
+		return nil, err
+	}
+	return embeddings, nil
 }
 
 // ── Types ──────────────────────────────────────────────────────────

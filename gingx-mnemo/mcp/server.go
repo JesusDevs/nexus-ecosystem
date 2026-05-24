@@ -568,7 +568,12 @@ func (s *Server) handleSave(args map[string]interface{}) (string, error) {
 		return "", fmt.Errorf("error guardando memoria: %w", err)
 	}
 
-	return fmt.Sprintf("✅ Memoria guardada: %s\n- Proyecto: %s\n- Tipo: %s\n- Medio: %s\n- Versión: %s\n- Outcome: %s\n- Tags: %s\n- Dims: %d",
+	// Dual-write to .gingx/memory/ for portable memory
+		if gingxDir, err := vec.FindGingxDir(); err == nil {
+			vec.AppendToMemoryFiles(gingxDir, mem)
+		}
+
+		return fmt.Sprintf("✅ Memoria guardada: %s\n- Proyecto: %s\n- Tipo: %s\n- Medio: %s\n- Versión: %s\n- Outcome: %s\n- Tags: %s\n- Dims: %d",
 		id, project, memType, mediaType, version, outcome, strings.Join(tags, ", "), s.embedder.Dimension()), nil
 }
 

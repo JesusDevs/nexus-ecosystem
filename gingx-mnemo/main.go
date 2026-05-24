@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gingx-sdd/gingx-mnemo/mcp"
@@ -48,6 +49,8 @@ func main() {
 		runStats()
 	case "setup":
 		runSetup()
+	case "import":
+		runImport()
 	case "config":
 		if len(os.Args) >= 4 && os.Args[2] == "set" {
 			runConfigSet()
@@ -85,6 +88,7 @@ Usage:
   mnemo releases <proj>       List releases for a project
   mnemo pack export <proj>    Export memories to portable JSON
   mnemo pack import <file>    Import memories from a pack JSON
+  mnemo import [--path <file>] Import from .gingx/memory/entries.jsonl
   mnemo sync push|pull|status Sync mnemo DB via git remote
   mnemo hdu save|search|list  Manage HDUs in vector memory
   mnemo conflicts             Detect semantic conflicts
@@ -247,6 +251,13 @@ func runSave() {
 		fmt.Printf(" | v%s", version)
 	}
 	fmt.Printf(" | Dims: %d\n", embedder.Dimension())
+
+	// Dual-write to .gingx/memory/ for portable memory
+	if gingxDir, err := vec.FindGingxDir(); err == nil {
+		if err := vec.AppendToMemoryFiles(gingxDir, mem); err == nil {
+			fmt.Printf("   → .gingx/memory/entries.jsonl updated\n")
+		}
+	}
 }
 
 func runSimilar() {
@@ -677,6 +688,7 @@ func runSync() {
 			os.Exit(1)
 		}
 		fmt.Println(msg)
+		fmt.Println("Hint: use .gingx/memory/ for portable memory — commit entries.jsonl to your repo.")
 
 	case "pull":
 		msg, err := store.SyncPull()
@@ -685,6 +697,7 @@ func runSync() {
 			os.Exit(1)
 		}
 		fmt.Println(msg)
+		fmt.Println("Hint: use .gingx/memory/ for portable memory — commit entries.jsonl to your repo.")
 
 	case "status":
 		msg, err := store.SyncStatus()
@@ -701,8 +714,112 @@ func runSync() {
 	}
 }
 
-// ── HDU Commands ──────────────────────────────────────────────────────
+// ── Import Portable Memory ─────────────────────────────────────────────
+func runImport() {
+	path := flagArg("--path", "")
+	reindex := hasFlag("--reindex")
 
+	store, embedder := openStore()
+	defer store.Close()
+
+	if path == "" {
+		gingxDir, err := vec.FindGingxDir()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Not in a Gingx project (.gingx/ not found).\n")
+			fmt.Fprintf(os.Stderr, "Use --path to import from an arbitrary JSONL file.\n")
+			os.Exit(1)
+		}
+		path = filepath.Join(gingxDir, "memory", "entries.jsonl")
+	}
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		fmt.Println("Nothing to import — no entries.jsonl found.")
+		return
+	}
+
+	entries, err := vec.ReadMemoryEntries(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading entries: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(entries) == 0 {
+		fmt.Println("0 imported, 0 skipped (empty file)")
+		return
+	}
+
+	embeddingsPath := filepath.Join(filepath.Dir(path), "embeddings.json")
+	embeddings, _ := vec.ReadEmbeddings(embeddingsPath)
+
+	imported := 0
+	skipped := 0
+	newEmbeddings := make(map[string][]float32)
+
+	for _, e := range entries {
+		if e.ID == "" {
+			continue
+		}
+		if store.EntryExists(e.ID) {
+			skipped++
+			continue
+		}
+
+		var emb []float32
+		if !reindex {
+			if eb, ok := embeddings[e.ID]; ok && len(eb) > 0 {
+				emb = eb
+			}
+		}
+
+		if len(emb) == 0 {
+			if embedder != nil {
+				textToEmbed := e.Title + "\n" + e.Content
+				var genErr error
+				emb, genErr = embedder.Embed(textToEmbed)
+				if genErr != nil {
+					fmt.Fprintf(os.Stderr, "  Skipping %s: embedding failed (%v)\n", e.ID, genErr)
+					skipped++
+					continue
+				}
+			} else {
+				fmt.Fprintf(os.Stderr, "  Skipping %s: no embedding available\n", e.ID)
+				skipped++
+				continue
+			}
+		}
+
+		mem := &vec.VectorMemory{
+			ID:             e.ID,
+			Project:        e.Project,
+			Title:          e.Title,
+			Content:        e.Content,
+			Type:           e.Type,
+			Embedding:      emb,
+			EmbeddingModel: e.EmbeddingModel,
+			EmbeddingDim:   e.EmbeddingDim,
+			Tags:           e.Tags,
+			Outcome:        e.Outcome,
+			MediaType:      e.MediaType,
+			Version:        e.Version,
+		}
+		if err := store.Save(mem); err != nil {
+			fmt.Fprintf(os.Stderr, "  Error saving %s: %v\n", e.ID, err)
+			skipped++
+			continue
+		}
+		newEmbeddings[e.ID] = emb
+		imported++
+	}
+
+	if reindex && len(newEmbeddings) > 0 {
+		data, _ := json.MarshalIndent(newEmbeddings, "", "  ")
+		os.WriteFile(embeddingsPath, append(data, '\n'), 0644)
+	}
+
+	fmt.Printf("imported %d, skipped %d\n", imported, skipped)
+}
+
+// ── HDU Commands ──────────────────────────────────────────────────────
 func runHDU() {
 	if len(os.Args) < 3 {
 		fmt.Fprintln(os.Stderr, "Usage: mnemo hdu <save|search|list|transfer|get> [...]")

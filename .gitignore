@@ -24,3 +24,4 @@ gingx-mnemo/mnemo
 
 # Graphify output
 graphify-out/
+.gingx/memory/embeddings.json
